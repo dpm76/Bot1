@@ -23,13 +23,14 @@ class Motor(object):
     #BeagleBone's config.
     #TODO 20150408 DPM - Include this configuration in such a settings file
     _pins = [{KEY_PWM_ID: 6, KEY_PIN_ID: "P8.13"},
-             {KEY_PWM_ID: 5, KEY_PIN_ID: "P8.19"},
-             {KEY_PWM_ID: 4, KEY_PIN_ID: "P9.16"},
-             {KEY_PWM_ID: 3, KEY_PIN_ID: "P9.14"}]
+             {KEY_PWM_ID: 5, KEY_PIN_ID: "P8.19"}]
+    #{KEY_PWM_ID: 4, KEY_PIN_ID: "P9.16"},
+    #{KEY_PWM_ID: 3, KEY_PIN_ID: "P9.14"}]
+    _gpios = ["27", "26"]
     
     PERIOD = 20000000 #nanoseconds = 50Hz
     
-    MIN_DUTY = PERIOD * 20 / 100 #nanoseconds
+    MIN_DUTY = PERIOD * 50 / 100 #nanoseconds
     NEUTRAL_DUTY = 0 #nanoseconds
     MAX_DUTY = PERIOD * 90 / 100 #nanoseconds Max duty cannot be more than 90% of the period.
     
@@ -54,7 +55,7 @@ class Motor(object):
         self._throttle = 0.0
         self._duty = Motor.NEUTRAL_DUTY
 
-        self._gpioId = "27"
+        self._gpioId = Motor._gpios[motorId]
         
     
     def start(self):
@@ -89,15 +90,25 @@ class Motor(object):
         @param throttle: Motor power as percentage 
         """
         
-        self._throttle = float(throttle)
-
-        if self._throttle > 0.0 and self._throttle <= Motor.MAX_THROTTLE:            
+        self._throttle = float(throttle)        
+        absThrottle = abs(self._throttle)
         
-            self._duty = int((Motor.RANGE_DUTY * self._throttle) + Motor.MIN_DUTY)
+        #Fordwards or backwards movement decision
+        if self._throttle >= 0.0:
+            SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
+        else:
+            SysfsWriter.writeOnce("1", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
+
+        if absThrottle > 0.0 and absThrottle <= Motor.MAX_THROTTLE:            
+        
+            self._duty = int((Motor.RANGE_DUTY * absThrottle) + Motor.MIN_DUTY)
             #logging.debug("motor {0}: duty={1}; throttle={2}".format(self._motorId, self._duty, self._throttle))
         
         elif self._throttle <= 0.0:
             self._duty = Motor.NEUTRAL_DUTY
+            
+        else:
+            seld._duty = Motor.MAX_DUTY
 
         #else:
         #    logging.debug("motor {0}: duty={1}; throttle={2} (virtual)".format(self._motorId, self._duty, self._throttle))
@@ -127,6 +138,7 @@ class Motor(object):
         
         self._throttle = 0.0
         self._duty = Motor.NEUTRAL_DUTY
+        SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
         self._sysfsWriter.write(str(self._duty))       
         
         
@@ -141,6 +153,7 @@ class Motor(object):
         
         self._sysfsWriter.close()
         SysfsWriter.writeOnce("0", "/sys/class/pwm/pwm{0}/run".format(self._pwmId))
+        SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
         
     
         
