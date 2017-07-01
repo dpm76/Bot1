@@ -1,0 +1,11 @@
+INSTUPengine.sysfs_writer
+/home/david/proyectos/Bot1/bot1/engine/sysfs_writer.py
+INFOS:&&1|1|2|0&&2|3|2|1&&2|4|2|1&&3|5|2|6&&2|7|2|1&&2|8|2|1
+SysfsWriter=1
+_file=5
+SysfsWriter.__init__=6
+writeOnce=3
+engine.sysfs_writer=2
+__init__=4
+write=7
+close=8
