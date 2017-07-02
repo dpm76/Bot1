@@ -7,7 +7,7 @@ Created on 06/04/2015
 '''
 
 #from config import Configuration
-from builtins import NotImplementedError
+#from builtins import NotImplementedError
 
 from engine.motor import Motor
 
@@ -28,7 +28,7 @@ class Driver(object):
         '''
         
         driver = Driver()
-        driver.setMotors(Motor(0), Motor(1))
+        driver.setMotors(Motor(1), Motor(0))
         
         return driver
     
@@ -39,7 +39,8 @@ class Driver(object):
         Creates a new motor driver for testing context
         @return: The driver object
         '''
-        raise NotImplementedError() #TODO: create driver for testing
+        #raise NotImplementedError() #TODO: create driver for testing
+        raise Exception("Not implemented yet!")
 
 
     def __init__(self):
@@ -133,10 +134,15 @@ class Driver(object):
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
         
-        if throttle != 0.0 and direction != 0.0:
+        if throttle != 0.0 or direction != 0.0:
         
             leftThrottle = throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
             rightThrottle = throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+
+            if throttle < 0.0:
+                temp = leftThrottle
+                leftThrottle = rightThrottle
+                rightThrottle = temp
             
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
