@@ -93,25 +93,24 @@ class Motor(object):
         self._throttle = float(throttle)        
         absThrottle = abs(self._throttle)
         
-        #Fordwards or backwards movement decision
+        #Fordwards or backwards movement
         if self._throttle >= 0.0:
             SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
         else:
             SysfsWriter.writeOnce("1", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
+            
 
+        #Throttle
         if absThrottle > 0.0 and absThrottle <= Motor.MAX_THROTTLE:            
         
             self._duty = int((Motor.RANGE_DUTY * absThrottle) + Motor.MIN_DUTY)
-            #logging.debug("motor {0}: duty={1}; throttle={2}".format(self._motorId, self._duty, self._throttle))
         
-        elif self._throttle <= 0.0:
+        elif absThrottle == 0.0:
             self._duty = Motor.NEUTRAL_DUTY
             
-        else:
-            seld._duty = Motor.MAX_DUTY
-
-        #else:
-        #    logging.debug("motor {0}: duty={1}; throttle={2} (virtual)".format(self._motorId, self._duty, self._throttle))
+        else: # absThrottle > Motor.MAX_THROTTLE
+            self._duty = Motor.MAX_DUTY
+            self._throttle = Motor.MAX_THROTTLE if self._throttle >= 0.0 else -Motor.MAX_THROTTLE
 
         self._sysfsWriter.write(str(self._duty))
         
