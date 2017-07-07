@@ -6,10 +6,7 @@ Created on 06/04/2015
 @author: david
 '''
 
-#from config import Configuration
-#from builtins import NotImplementedError
-
-from engine.motor import Motor
+from engine.motor import Motor, MotorDummy
 
 
 class Driver(object):
@@ -39,8 +36,11 @@ class Driver(object):
         Creates a new motor driver for testing context
         @return: The driver object
         '''
-        #raise NotImplementedError() #TODO: create driver for testing
-        raise Exception("Not implemented yet!")
+        
+        driver = Driver()
+        driver.setMotors(MotorDummy(1), MotorDummy(0))
+        
+        return driver
 
 
     def __init__(self):
@@ -139,6 +139,7 @@ class Driver(object):
             leftThrottle = throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
             rightThrottle = throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
 
+            #In case of backwards movement, throttles of each wheel must be swapped between them.
             if throttle < 0.0:
                 temp = leftThrottle
                 leftThrottle = rightThrottle

@@ -155,4 +155,89 @@ class Motor(object):
         SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
         
     
+class MotorDummy(object):
+    """
+    Controls a dummy motor
+    """
+
+    MAX_THROTTLE = 100.0 #percentage
+
+
+    def __init__(self, motorId):
+        """
+        Constructor
+        
+        @param motorId: Identificator of the motor. A number between 0 to 3 (in case of quadcopter)  
+        """
+        
+        self._motorId = motorId        
+        self._throttle = 0.0
+        
+    
+    def start(self):
+        """
+        Starts the motor up
+        """
+        
+        self.setNeutralThrottle()
+        
+        msg = "motor {0}: started".format(self._motorId)
+        logging.debug(msg)
+        print(msg)
+        
+        
+    def setThrottle(self, throttle):
+        """
+        Sets the motor's throttle
+        
+        @param throttle: Motor power as percentage 
+        """
+        
+        self._throttle = float(throttle)        
+        absThrottle = abs(self._throttle)
+            
+        if absThrottle > Motor.MAX_THROTTLE:            
+            self._throttle = Motor.MAX_THROTTLE if self._throttle >= 0.0 else -Motor.MAX_THROTTLE
+
+        msg="motor {0} throttle: {1}".format(self._motorId, self._throttle)
+        logging.debug(msg)
+        print(msg)
+        
+    
+    def getThrottle(self):
+        
+        return self._throttle
+    
+    
+    def addThrottle(self, increment):
+        """
+        Increases or decreases the motor's throttle
+        
+        @param increment: Value added to the current throttle percentage. This can be negative to decrease.
+        """
+        
+        self.setThrottle(self._throttle + increment)
+        
+        
+    def setNeutralThrottle(self):
+        """
+        Set the motor at neutral
+        """
+        
+        self._throttle = 0.0
+        msg="motor {0} throttle: {1}".format(self._motorId, self._throttle)
+        logging.debug(msg)
+        print(msg)       
+        
+        
+    def stop(self):
+        """
+        Stops the motor
+        """
+        
+        msg="motor {0}: stop".format(self._motorId)
+        logging.debug(msg)
+        print(msg)
+
+        self.setNeutralThrottle()        
         
