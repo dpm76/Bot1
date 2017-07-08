@@ -4,8 +4,8 @@ Created on 22 de may. de 2016
 @author: david
 '''
 from device.event import EventHook
-from builtins import int
-from apt.progress.text import long
+#from builtins import int
+#from apt.progress.text import long
 
 
 class Joystick(object):

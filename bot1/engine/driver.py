@@ -15,7 +15,7 @@ class Driver(object):
     '''
 
     #Maximal wheel spin difference in relation to main throtle to turn. 
-    MAX_DIRECTION_DIFF = 20.0
+    MAX_DIRECTION_DIFF = 10.0
     
     @staticmethod
     def createForRobot():

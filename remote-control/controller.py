@@ -7,6 +7,9 @@ from time import sleep
 
 from device.manager import JoystickManager
 
+import rpyc
+from ocrfeeder.odf.chart import Axis
+
 
 class Controller(object):
     '''
@@ -32,13 +35,19 @@ class Controller(object):
             self._joystick = None            
             
             
-    def start(self):
+    def start(self, remoteAddress, testing=False):
         '''
         Starts controller activity
         '''
         
         if self._joystick and not self._started:
             
+            self._connection = rpyc.classic.connect(remoteAddress)
+            self._driver = self._connection.modules["engine.driver"].Driver.createForTesting() \
+                            if testing else \
+                            self._connection.modules["engine.driver"].Driver.createForRobot()
+            
+            self._driver.start()            
             self._started = True
             
             while self._started:
@@ -49,9 +58,12 @@ class Controller(object):
         '''
         Stops controller activity
         '''
-        
-        self._started = False        
+                
         self._joystickManager.stop()
+        self._driver.stop()
+        self._connection.close()
+        
+        self._started = False
         
     
     def _onJoystickAxisChanged(self, sender, index):
@@ -66,10 +78,11 @@ class Controller(object):
             
             if index == 3:
                 #Direction
-                print("Direction: {0}".format(axisValue))
+                self._driver.setDirection(axisValue)
+                
             elif index == 4:
                 #Throttle
-                print("Throttle: {0}".format(axisValue))
+                self._driver.setThrottle(-axisValue)
         
     
 
@@ -81,8 +94,6 @@ class Controller(object):
         '''
         
         if sender == self._joystick:
-            
-            print("Button: {0}".format(index))
             
             if index == 0:
                 self._started = False
