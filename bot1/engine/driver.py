@@ -7,7 +7,7 @@ Created on 06/04/2015
 '''
 
 from engine.motor import Motor, MotorDummy
-
+import logging
 
 class Driver(object):
     '''
@@ -15,7 +15,7 @@ class Driver(object):
     '''
 
     #Maximal wheel spin difference in relation to main throtle to turn. 
-    MAX_DIRECTION_DIFF = 10.0
+    MAX_DIRECTION_DIFF = 40.0
     
     @staticmethod
     def createForRobot():
@@ -137,11 +137,11 @@ class Driver(object):
         if throttle != 0.0:
             
             leftThrottle = throttle \
-                                if direction > 0.0 else \
-                                    throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
-            rightThrottle = throttle \
                                 if direction < 0.0 else \
-                                    throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+                                    (throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0))
+            rightThrottle = throttle \
+                                if direction > 0.0 else \
+                                    (throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0))
 
             
             #In case of backwards movement, throttles of each wheel must be swapped between them.
@@ -149,7 +149,9 @@ class Driver(object):
                 temp = leftThrottle
                 leftThrottle = rightThrottle
                 rightThrottle = temp
-            
+
+            logging.debug("({0},{1}) -> ({2},{3})".format(throttle, direction, leftThrottle, rightThrottle))
+
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
             

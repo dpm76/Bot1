@@ -7,7 +7,6 @@ Created on 06/04/2015
 '''
 from os import system
 
-
 class SysfsWriter(object):
     
     @staticmethod
@@ -24,16 +23,20 @@ class SysfsWriter(object):
         Constructor
         '''
         
-        self._file = open(path, "a")
+        self._path = path
+        #self._file = open(path, "a")
         
         
     def write(self, text):
-        
-        self._file.write(text)
-        self._file.flush()
+
+        #self._file.write(text)
+        #self._file.flush()
+
+        SysfsWriter.writeOnce(text, self._path)
         
         
     def close(self):
         
-        self._file.close()
+        #self._file.close()
+        pass
         
