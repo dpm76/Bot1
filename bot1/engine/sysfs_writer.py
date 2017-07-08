@@ -27,7 +27,7 @@ class SysfsWriter(object):
         self._file = open(path, "a")
         
         
-    def write(self, text):
+    def write(self, text):        
         
         self._file.write(text)
         self._file.flush()
