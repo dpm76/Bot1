@@ -84,6 +84,12 @@ class Controller(object):
             elif index == 4:
                 #Throttle
                 self._driver.setThrottle(-axisValue)
+                
+                
+            #throttle = self._driver.getThrottle()
+            #direction = self._driver.getDirection()
+            
+            #print("({0},{1})".format(throttle, direction))
         
     
 
