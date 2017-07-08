@@ -15,7 +15,7 @@ class Driver(object):
     '''
 
     #Maximal wheel spin difference in relation to main throtle to turn. 
-    MAX_DIRECTION_DIFF = 40.0
+    MAX_DIRECTION_DIFF = 80.0
     
     @staticmethod
     def createForRobot():
@@ -150,7 +150,7 @@ class Driver(object):
                 leftThrottle = rightThrottle
                 rightThrottle = temp
 
-            logging.debug("({0},{1}) -> ({2},{3})".format(throttle, direction, leftThrottle, rightThrottle))
+            #logging.debug("({0},{1}) -> ({2},{3})".format(throttle, direction, leftThrottle, rightThrottle))
 
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
