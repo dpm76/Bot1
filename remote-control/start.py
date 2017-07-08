@@ -12,7 +12,7 @@ def main():
     controller = Controller()    
     
     try:
-        controller.start("192.168.1.130", True)
+        controller.start("192.168.1.130", False)
     except Exception as e:        
         print(e)
     finally:

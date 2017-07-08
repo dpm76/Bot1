@@ -3,9 +3,9 @@ Created on 22 de may. de 2016
 
 @author: david
 '''
+from builtins import int
+
 from device.event import EventHook
-#from builtins import int
-#from apt.progress.text import long
 
 
 class Joystick(object):
@@ -117,7 +117,7 @@ class Joystick(object):
         self.onChanged.fire(self)
         self.onHatChanged.fire(self, index)
         
-        if isinstance(self._hats[index], (int, long)): 
+        if isinstance(self._hats[index], (int)): 
         
             if self._hats[index] < 0:
                 self.onHatPressedNegative.fire(self, index)

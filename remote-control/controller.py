@@ -8,7 +8,6 @@ from time import sleep
 from device.manager import JoystickManager
 
 import rpyc
-from ocrfeeder.odf.chart import Axis
 
 
 class Controller(object):
@@ -38,6 +37,8 @@ class Controller(object):
     def start(self, remoteAddress, testing=False):
         '''
         Starts controller activity
+        @param remoteAddress: Robot's network address
+        @param testing: Boolean value indicating wether it should run in testing context
         '''
         
         if self._joystick and not self._started:
