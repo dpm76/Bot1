@@ -133,12 +133,17 @@ class Driver(object):
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
-        
-        if throttle != 0.0 or direction != 0.0:
-        
-            leftThrottle = throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
-            rightThrottle = throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+            
+        if throttle != 0.0:
+            
+            leftThrottle = throttle \
+                                if direction > 0.0 else \
+                                    throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+            rightThrottle = throttle \
+                                if direction < 0.0 else \
+                                    throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
 
+            
             #In case of backwards movement, throttles of each wheel must be swapped between them.
             if throttle < 0.0:
                 temp = leftThrottle
@@ -147,11 +152,19 @@ class Driver(object):
             
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
-
-        else:
+            
+        elif direction == 0.0:
             
             self._leftMotor.setNeutralThrottle()
             self._rightMotor.setNeutralThrottle()
+            
+        else:
+            
+            leftThrottle = throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+            rightThrottle = throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+
+            self._leftMotor.setThrottle(leftThrottle)
+            self._rightMotor.setThrottle(rightThrottle)
             
         self._throttle = throttle
         self._direction = direction        
