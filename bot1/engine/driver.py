@@ -7,7 +7,6 @@ Created on 06/04/2015
 '''
 
 from engine.motor import Motor, MotorDummy
-import logging
 
 class Driver(object):
     '''
