@@ -15,7 +15,7 @@ class Driver(object):
     '''
 
     #Maximal wheel spin difference in relation to main throtle to turn. 
-    MAX_DIRECTION_DIFF = 80.0
+    MAX_DIRECTION_DIFF = 50.0
     
     @staticmethod
     def createForRobot():
@@ -133,7 +133,9 @@ class Driver(object):
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
-            
+
+        throttle=throttle/2.0            
+
         if throttle != 0.0:
             
             leftThrottle = throttle \
