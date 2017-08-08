@@ -30,7 +30,7 @@ class Motor(object):
     
     PERIOD = 20000000 #nanoseconds = 50Hz
     
-    MIN_DUTY = PERIOD * 50 / 100 #nanoseconds
+    MIN_DUTY = PERIOD * 30 / 100 #nanoseconds
     NEUTRAL_DUTY = 0 #nanoseconds
     MAX_DUTY = PERIOD * 90 / 100 #nanoseconds Max duty cannot be more than 90% of the period.
     
