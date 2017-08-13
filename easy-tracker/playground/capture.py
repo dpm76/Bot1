@@ -5,8 +5,10 @@ Created on 9 jul. 2017
 '''
 
 import rpyc
+import time
 
 import cv2
+from engine.driver import Driver
 import numpy as np
 
 
@@ -95,8 +97,10 @@ def camTrack():
     matcher = cv2.BFMatcher(cv2.NORM_HAMMING2, crossCheck=True)
     
     #Init robot driver
-    connection = rpyc.classic.connect(REMOTE_ADDRESS)    
-    driver = connection.modules["engine.driver"].Driver.createForRobot()
+    #connection = rpyc.classic.connect(REMOTE_ADDRESS)    
+    #driver = connection.modules["engine.driver"].Driver.createForRobot()
+    #driver = connection.modules["engine.driver"].Driver.createForTesting()
+    driver = Driver.createForTesting()
     driver.start()
     
     try:
@@ -132,9 +136,15 @@ def camTrack():
             error = 0
             
             driver.start()
-                    
+            
+            sdt = 0.0
+            count = 0
+            
             done = False
             while not done:
+                
+                t = time.time()
+                
                 _, frame = cap.read()
                 frame = cv2.flip(frame, 1)
                 
@@ -193,19 +203,13 @@ def camTrack():
                             action = 100.0
                         
                         driver.setDirection(action)
-                        
-                        print(action)
-                        
-                        #print("Target at ({0},{1})".format(*targetCoords))             
                     
-                        #Highlight target on frame
+                        #Highlight target within frame
                         cv2.polylines(frame,[dst],True,(0, 255, 0),2, LINE_AA)
                         targetColor = (0,255,0)
                         
                     else:
                         #driver.setDirection(0.0)
-                        
-                        #print("Target not found; cosines = {0}".format((cosine1, cosine3)))
                         cv2.polylines(frame,[dst],True,(0, 0, 255),2, LINE_AA)
                         targetColor = (0,0,255)
                         
@@ -234,9 +238,16 @@ def camTrack():
                     cv2.destroyWindow("target")
                     if key == ord("q"):
                         finish = True
+                        
+                sdt += time.time() - t
+                count += 1
+            
+            mt = sdt/count
+            print("tiempo medio: {0:.3f} s; freq: {1:.3f} hz".format(mt, 1.0/mt))
+            
     finally:
         driver.stop()                
-        connection.close()
+        #connection.close()
         print("Finalizando")
         cv2.destroyAllWindows()
         cap.release()

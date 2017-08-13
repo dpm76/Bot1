@@ -30,11 +30,9 @@ class Motor(object):
     
     PERIOD = 20000000 #nanoseconds = 50Hz
     
-    MIN_DUTY = PERIOD * 30 / 100 #nanoseconds
+    DEFAULT_MIN_DUTY = PERIOD * 10 / 100 #nanoseconds
     NEUTRAL_DUTY = 0 #nanoseconds
     MAX_DUTY = PERIOD * 90 / 100 #nanoseconds Max duty cannot be more than 90% of the period.
-    
-    RANGE_DUTY = (MAX_DUTY - MIN_DUTY) / 100.0
 
     MAX_THROTTLE = 100.0 #percentage
 
@@ -52,10 +50,28 @@ class Motor(object):
         
         self._motorId = motorId
         
+        self._minDuty = Motor.DEFAULT_MIN_DUTY
+        self._updateRangeDuty()
+        
         self._throttle = 0.0
         self._duty = Motor.NEUTRAL_DUTY
 
         self._gpioId = Motor._gpios[motorId]
+    
+    
+    def _updateRangeDuty(self):
+        
+        self._rangeDuty = (Motor.MAX_DUTY - self._minDuty) / 100.0
+           
+           
+    def resetMinThrottle(self):
+        """
+        Set current duty as minimal throttle 
+        """
+        
+        self._minDuty = self._duty
+        self._trottle = 0.0
+        self._updateRangeDuty()
         
     
     def start(self):
@@ -103,14 +119,14 @@ class Motor(object):
         #Throttle
         if absThrottle > 0.0 and absThrottle <= Motor.MAX_THROTTLE:            
         
-            self._duty = int((Motor.RANGE_DUTY * absThrottle) + Motor.MIN_DUTY)
+            self._duty = int((Motor.RANGE_DUTY * absThrottle) + self._minDuty)
         
         elif absThrottle == 0.0:
-            self._duty = Motor.NEUTRAL_DUTY
+            self.setNeutralThrottle()
             
         else: # absThrottle > Motor.MAX_THROTTLE
             self._duty = Motor.MAX_DUTY
-            self._throttle = Motor.MAX_THROTTLE if self._throttle >= 0.0 else -Motor.MAX_THROTTLE
+            self._throttle = Motor.MAX_THROTTLE if self._throttle > 0.0 else -Motor.MAX_THROTTLE
 
         self._sysfsWriter.write(str(self._duty))
         
@@ -173,6 +189,16 @@ class MotorDummy(object):
         self._motorId = motorId        
         self._throttle = 0.0
         
+    def _log(self, message):
+        """
+        Logs a message
+        @param message: Message to log
+        """
+        
+        msg = "motor {0}: {1}".format(self._motorId, message)
+        logging.debug(msg)
+        print(msg)
+        
     
     def start(self):
         """
@@ -181,9 +207,7 @@ class MotorDummy(object):
         
         self.setNeutralThrottle()
         
-        msg = "motor {0}: started".format(self._motorId)
-        logging.debug(msg)
-        print(msg)
+        self._log("started")
         
         
     def setThrottle(self, throttle):
@@ -199,10 +223,8 @@ class MotorDummy(object):
         if absThrottle > Motor.MAX_THROTTLE:            
             self._throttle = Motor.MAX_THROTTLE if self._throttle >= 0.0 else -Motor.MAX_THROTTLE
 
-        msg="motor {0} throttle: {1}".format(self._motorId, self._throttle)
-        logging.debug(msg)
-        print(msg)
-        
+        self._log("throttle: {0}".format(self._throttle))
+                
     
     def getThrottle(self):
         
@@ -225,9 +247,8 @@ class MotorDummy(object):
         """
         
         self._throttle = 0.0
-        msg="motor {0} throttle: {1}".format(self._motorId, self._throttle)
-        logging.debug(msg)
-        print(msg)       
+        
+        self._log("throttle: {0}".format(self._throttle))
         
         
     def stop(self):
@@ -235,9 +256,7 @@ class MotorDummy(object):
         Stops the motor
         """
         
-        msg="motor {0}: stop".format(self._motorId)
-        logging.debug(msg)
-        print(msg)
+        self._log("stop")
 
         self.setNeutralThrottle()        
         

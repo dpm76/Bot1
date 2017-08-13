@@ -83,6 +83,8 @@ class Driver(object):
         Stop the motors
         '''
         
+        self.setNeutral()
+        
         self._leftMotor.stop()
         self._rightMotor.stop()
         
