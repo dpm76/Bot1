@@ -119,7 +119,7 @@ class Motor(object):
         #Throttle
         if absThrottle > 0.0 and absThrottle <= Motor.MAX_THROTTLE:            
         
-            self._duty = int((Motor.RANGE_DUTY * absThrottle) + self._minDuty)
+            self._duty = int((self._rangeDuty * absThrottle) + self._minDuty)
         
         elif absThrottle == 0.0:
             self.setNeutralThrottle()
