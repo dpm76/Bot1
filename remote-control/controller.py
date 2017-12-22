@@ -3,11 +3,11 @@ Created on 6 jul. 2017
 
 @author: david
 '''
+import rpyc
 from time import sleep
 
 from device.manager import JoystickManager
-
-import rpyc
+from engine.driver import Driver
 
 
 class Controller(object):
@@ -22,6 +22,9 @@ class Controller(object):
         
         self._started = False
         
+        self._connection = None
+        self._driver = None
+        
         self._joystickManager = JoystickManager.getInstance()
         self._joystickManager.start()
         joysticks = self._joystickManager.getJoysticks()        
@@ -34,19 +37,29 @@ class Controller(object):
             self._joystick = None            
             
             
-    def start(self, remoteAddress, testing=False):
+    def start(self, remoteAddress=None, testing=False, local=False):
         '''
         Starts controller activity
+        
         @param remoteAddress: Robot's network address
-        @param testing: Boolean value indicating wether it should run in testing context
+        @param testing: Boolean value indicating whether it should run in testing context
+        @param local: If true runs on local machine instead of remotely 
         '''
+        
+        if not self._joystick:
+            raise Exception("No joystick available!")
         
         if self._joystick and not self._started:
             
-            self._connection = rpyc.classic.connect(remoteAddress)
-            self._driver = self._connection.modules["engine.driver"].Driver.createForTesting() \
-                            if testing else \
-                            self._connection.modules["engine.driver"].Driver.createForRobot()
+            if not local:
+                self._connection = rpyc.classic.connect(remoteAddress)
+                self._driver = self._connection.modules["engine.driver"].Driver.createForTesting() \
+                                if testing else \
+                                self._connection.modules["engine.driver"].Driver.createForRobot()
+            else: #Running localy
+                self._driver = Driver.createForTesting() \
+                                if testing else \
+                                Driver.createForRobot()
             
             self._driver.start()            
             self._started = True
@@ -61,8 +74,11 @@ class Controller(object):
         '''
                 
         self._joystickManager.stop()
-        self._driver.stop()
-        self._connection.close()
+        if self._driver:
+            self._driver.stop()
+        
+        if self._connection:
+            self._connection.close()
         
         self._started = False
         
@@ -84,13 +100,6 @@ class Controller(object):
             elif index == 4:
                 #Throttle
                 self._driver.setThrottle(-axisValue)
-                
-                
-            #throttle = self._driver.getThrottle()
-            #direction = self._driver.getDirection()
-            
-            #print("({0},{1})".format(throttle, direction))
-        
     
 
     def _onJoystickButtonPressed(self, sender, index):

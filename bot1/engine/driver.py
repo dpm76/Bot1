@@ -7,14 +7,21 @@ Created on 06/04/2015
 '''
 
 from engine.motor import Motor, MotorDummy
+import logging
 
 class Driver(object):
     '''
     Controls a motor set
     '''
 
-    #Maximal wheel spin difference in relation to main throtle to turn. 
-    MAX_DIRECTION_DIFF = 50.0
+    #Thresholds for throttle ranges. For each range a different turning method will be used. 
+    THROTTLE_RANGE_THRESHOLD_1 = 25.0
+    THROTTLE_RANGE_THRESHOLD_2 = 75.0
+    THROTTLE_RANGE_THRESHOLD_DIFF = THROTTLE_RANGE_THRESHOLD_2 - THROTTLE_RANGE_THRESHOLD_1 
+
+    #Direction divisors to set the wheels spining at diferent speeds in order to turn the robot.  
+    DIRECTION_DIV1 = 100.0
+    DIRECTION_DIV2 = 400.0
     
     @staticmethod
     def createForRobot():
@@ -134,61 +141,73 @@ class Driver(object):
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
-
-        throttle=throttle/2.0            
-
+        
+        self._throttle = throttle
+        self._direction = direction
+        
+        logging.debug("motion vector=(t:{0}, d:{1})".format(self._throttle, self._direction))
+        
         if throttle != 0.0:
             
-            leftThrottle = throttle \
-                                if direction < 0.0 else \
-                                    (throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0))
-            rightThrottle = throttle \
-                                if direction > 0.0 else \
-                                    (throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0))
-
-            
-            #In case of backwards movement, throttles of each wheel must be swapped between them.
-            if throttle < 0.0:
-                temp = leftThrottle
-                leftThrottle = rightThrottle
-                rightThrottle = temp
-
-            #logging.debug("({0},{1}) -> ({2},{3})".format(throttle, direction, leftThrottle, rightThrottle))
-
+            modThrottle = abs(throttle)
+        
+            if modThrottle < Driver.THROTTLE_RANGE_THRESHOLD_1:
+                
+                if direction >= 0.0:
+                    
+                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV1)
+                    rightThrottle = throttle
+                    
+                else:
+                                
+                    leftThrottle = throttle
+                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV1)
+                      
+            elif Driver.THROTTLE_RANGE_THRESHOLD_1 <= modThrottle < Driver.THROTTLE_RANGE_THRESHOLD_2:
+                
+                if direction >= 0.0:
+                    
+                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV1) \
+                        * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV2) \
+                        * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    
+                else:
+                                
+                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV2) \
+                        * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV1) \
+                        * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+    
+            else:
+                
+                if direction >= 0.0:
+                    
+                    leftThrottle = throttle
+                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV2)
+                    
+                else:
+                    
+                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV2)
+                    rightThrottle = throttle
+                    
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
-            
-        elif direction == 0.0:
+    
+        else:
             
             self._leftMotor.setNeutralThrottle()
             self._rightMotor.setNeutralThrottle()
-            
+        
+        '''
+        TODO: Spin robot when throttle is 0 
         else:
             
-            leftThrottle = throttle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
-            rightThrottle = throttle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+            leftThrottle = baseThrottle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
+            rightThrottle = baseThrottle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
 
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
-            
-        self._throttle = throttle
-        self._direction = direction        
-        
-        
-    def getActualMotionVector(self):
         '''
-        Calculates actual throttle and direction:
-            Steering near the max throttle can reduce the effective throttle, 
-            due to one of the wheels can not be reaching the maximum difference regarding the desired main throttle.
             
-        @return: [throttle, direction]
-        '''
-        
-        actualLeftThrottle = self._leftMotor.getThrottle()
-        actualRightThrottle = self._rightMotor.getThrottle()
-        throttle = (actualLeftThrottle + actualRightThrottle) / 2.0
-        direction =  (throttle - actualRightThrottle) * 100.0 / Driver.MAX_DIRECTION_DIFF
-        
-        return [throttle, direction]
-        
         
