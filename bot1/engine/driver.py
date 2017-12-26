@@ -14,6 +14,10 @@ class Driver(object):
     Controls a motor set
     '''
 
+    #Driver modes    
+    MODE_NORMAL = 0
+    MODE_ROTATE = 1
+
     #Thresholds for throttle ranges. For each range a different turning method will be used. 
     THROTTLE_RANGE_THRESHOLD_1 = 25.0
     THROTTLE_RANGE_THRESHOLD_2 = 75.0
@@ -59,6 +63,8 @@ class Driver(object):
         
         self._throttle = 0.0
         self._direction = 0.0
+        
+        self._mode = Driver.MODE_NORMAL
         
                
     def setMotors(self, leftMotor, rightMotor):
@@ -134,62 +140,79 @@ class Driver(object):
         '''
         self.setMotionVector(0.0, 0.0)
 
-    
-    def setMotionVector(self, throttle, direction):       
+
+    def setMotionVector(self, throttle, direction):
         '''
         Set the motion vector (both, throttle and direction) directly.
+        Actual effect depends on the current driving mode.
+        
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
-        
+
         self._throttle = throttle
         self._direction = direction
         
         logging.debug("motion vector=(t:{0}, d:{1})".format(self._throttle, self._direction))
         
-        if throttle != 0.0:
+        if self._mode == Driver.MODE_NORMAL:
             
-            modThrottle = abs(throttle)
+            self._setMotionVectorOnNormalMode()
+
+        else: #Driver.MODE_ROTATE
+            
+            self._setMotionVectorOnRotateMode()
+       
+
+
+    def _setMotionVectorOnNormalMode(self):
+        '''
+        Set the motion vector on normal driving mode.        
+        '''
+        
+        if self._throttle != 0.0:
+            
+            modThrottle = abs(self._throttle)
         
             if modThrottle < Driver.THROTTLE_RANGE_THRESHOLD_1:
                 
-                if direction >= 0.0:
+                if self._direction >= 0.0:
                     
-                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV1)
-                    rightThrottle = throttle
+                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV1)
+                    rightThrottle = self._throttle
                     
                 else:
                                 
-                    leftThrottle = throttle
-                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV1)
+                    leftThrottle = self._throttle
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV1)
                       
             elif Driver.THROTTLE_RANGE_THRESHOLD_1 <= modThrottle < Driver.THROTTLE_RANGE_THRESHOLD_2:
                 
-                if direction >= 0.0:
+                if self._direction >= 0.0:
                     
-                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV1) \
+                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV1) \
                         * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
-                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV2) \
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV2) \
                         * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
                     
                 else:
                                 
-                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV2) \
+                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV2) \
                         * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
-                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV1) \
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV1) \
                         * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
     
             else:
                 
-                if direction >= 0.0:
+                if self._direction >= 0.0:
                     
-                    leftThrottle = throttle
-                    rightThrottle = throttle - throttle * (direction/Driver.DIRECTION_DIV2)
+                    leftThrottle = self._throttle
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV2)
                     
                 else:
                     
-                    leftThrottle = throttle + throttle * (direction/Driver.DIRECTION_DIV2)
-                    rightThrottle = throttle
+                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV2)
+                    rightThrottle = self._throttle
                     
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
@@ -198,16 +221,45 @@ class Driver(object):
             
             self._leftMotor.setNeutralThrottle()
             self._rightMotor.setNeutralThrottle()
-        
-        '''
-        TODO: Spin robot when throttle is 0 
-        else:
             
-            leftThrottle = baseThrottle + (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
-            rightThrottle = baseThrottle - (direction * Driver.MAX_DIRECTION_DIFF / 100.0)
-
+            
+    def _setMotionVectorOnRotateMode(self):
+        '''
+        Set the motion vector on rotate driving mode.        
+        '''
+        
+        if self._direction != 0:
+        
+            leftThrottle = self._direction
+            rightThrottle = -self._direction
+    
             self._leftMotor.setThrottle(leftThrottle)
             self._rightMotor.setThrottle(rightThrottle)
-        '''
             
+        else:
+            
+            self._leftMotor.setNeutralThrottle()
+            self._rightMotor.setNeutralThrottle()
+               
+            
+    def setMode(self, mode):
+        '''
+        Set driver mode
         
+        @param mode: Driving mode. See Driver.MODE_*        
+        '''
+        
+        if self._mode != mode:
+            
+            self.setNeutral()
+            self._mode = mode
+    
+    
+    def getMode(self):
+        '''
+        Get current driver mode
+        
+        @return: Any of Driver.MODE_*
+        '''
+        
+        return self._mode

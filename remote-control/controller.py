@@ -14,6 +14,10 @@ class Controller(object):
     '''
     Remote controller
     '''
+    
+    #Driving modes map. The value of each entry indicates the next mode when the key is the current mode.
+    _modeMap = { Driver.MODE_NORMAL : Driver.MODE_ROTATE, 
+                Driver.MODE_ROTATE : Driver.MODE_NORMAL }
 
     def __init__(self):
         '''
@@ -93,12 +97,17 @@ class Controller(object):
         if sender == self._joystick:
             axisValue = sender.getAxisValue(index)
             
-            if index == 3:
+            if index == 3: #Usually the horizontal axis of the left stick
                 #Direction
                 self._driver.setDirection(axisValue)
                 
-            elif index == 4:
+            elif index == 4: #Usually the vertical axis of the left stick
                 #Throttle
+                
+                #The axis value is inverted as should be intuitive: 
+                #    negative values are fordwards
+                #    positive values are backwards
+                # Therefore the passed value is negated.
                 self._driver.setThrottle(-axisValue)
     
 
@@ -111,6 +120,14 @@ class Controller(object):
         
         if sender == self._joystick:
             
-            if index == 0:
+            if index == 0: #Usually A-button
+                
                 self._started = False
+                
+            elif index == 1: #Usually B-button
+                
+                currentDrivingMode = self._driver.getMode()
+                nextDrivingMode = Controller._modeMap[currentDrivingMode]
+                self._driver.setMode(nextDrivingMode)
+                
     
