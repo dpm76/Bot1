@@ -24,8 +24,8 @@ class Driver(object):
     THROTTLE_RANGE_THRESHOLD_DIFF = THROTTLE_RANGE_THRESHOLD_2 - THROTTLE_RANGE_THRESHOLD_1 
 
     #Direction divisors to set the wheels spining at diferent speeds in order to turn the robot.  
-    DIRECTION_DIV1 = 100.0
-    DIRECTION_DIV2 = 400.0
+    DIRECTION_DIV1 = 50.0
+    DIRECTION_DIV2 = 200.0
     
     @staticmethod
     def createForRobot():
