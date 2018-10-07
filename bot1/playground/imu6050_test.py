@@ -1,0 +1,15 @@
+from sensor.imu6050 import Imu6050
+import time
+
+print("Press CTRL+C to stop")
+imu = Imu6050()
+
+imu.start()
+try:
+    imu.updateGyroTime()
+    while True:
+        print(imu.readAngleZ())
+        time.sleep(0.1)
+finally:
+    imu.stop()
+    
