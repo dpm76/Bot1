@@ -162,6 +162,11 @@ class Imu6050(I2CSensor):
         return self._readRawAccel(reg.ACC_ZOUT)
    
     
+    def readAccelY(self):
+        
+        self._readRawAccelY() * Imu6050.ACCEL2MS2
+    
+    
     def readAccels(self):
         '''
         Reads accels at once

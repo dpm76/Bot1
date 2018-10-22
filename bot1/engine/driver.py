@@ -6,8 +6,11 @@ Created on 06/04/2015
 @author: david
 '''
 
-from engine.motor import Motor, MotorDummy
 import logging
+
+from engine.motor import Motor, MotorDummy
+from stabilization.pid import Pid
+
 
 class Driver(object):
     '''
@@ -263,3 +266,131 @@ class Driver(object):
         '''
         
         return self._mode
+
+
+class SmartDriver(Driver):
+    '''
+    Controls the motor set in a smarty way
+    '''
+    
+    MAX_ANG_SPEED = 10.0 #degrees / second
+    
+    @staticmethod
+    def createForRobot(sensor):
+        '''
+        Creates a new motor driver for robot context
+        @return: The driver object
+        '''
+        
+        driver = SmartDriver(sensor)
+        driver.setMotors(Motor(1), Motor(0))
+        
+        return driver
+    
+
+    @staticmethod
+    def createForTesting(sensor):
+        '''
+        Creates a new motor driver for testing context
+        @return: The driver object
+        '''
+        
+        driver = SmartDriver(sensor)
+        driver.setMotors(MotorDummy(1), MotorDummy(0))
+        
+        return driver
+    
+    
+    def __init__(self, sensor):
+        '''
+        Constructor
+        
+        @param sensor: IMU/MPU in order to know the device's attitude 
+        '''
+        
+        super().__init__()
+        
+        self._direction = 0.0
+                
+        self._sensor = sensor
+        self._stabilizerPid = Pid(0.02, 1, self._readCurrentValues, self._setPidOutput, "Driver-PID")
+        
+    
+    def _readCurrentValues(self):
+        
+        return [self._sensor.readAngSpeedZ()]
+    
+    
+    def _setPidOutput(self, pidOuput):
+        
+        super().setDirection(pidOuput)
+        
+        
+    def setMotionVector(self, throttle, direction):
+        
+        if super().getMode() == Driver.MODE_NORMAL:
+            super().setThrottle(throttle)
+            self._direction = -direction if throttle > 0.0 else direction
+            self._stabilizerPid.setTargets([self._direction * SmartDriver.MAX_ANG_SPEED / 100.0])
+            if throttle == 0.0 and self._stabilizerPid.isRunning():                
+                self._stabilizerPid.stop()                
+            elif throttle != 0.0 and not self._stabilizerPid.isRunning():                
+                self._stabilizerPid.start()
+                
+        else:
+            super().setMotionVector(throttle, direction)
+            
+
+    def setDirection(self, direction):
+        
+        throttle = self.getThrottle()
+        self.setMotionVector(throttle, direction)
+        
+        
+    def setThrottle(self, throttle):
+        
+        self.setMotionVector(throttle, self._direction)
+        
+        
+    def getDirection(self):
+        
+        return self._direction
+    
+    
+    def getThrottle(self):
+        
+        return super().getThrottle()
+        
+        
+    def setNeutral(self):
+        
+        self.setMotionVector(0.0, 0.0)
+
+    
+    def setMode(self, mode):
+        
+        super().setMode(mode)
+        
+        if super().getMode() == Driver.MODE_NORMAL and super().getThrottle() != 0.0 \
+            and not self._stabilizerPid.isRunning():
+            
+            self._stabilizerPid.start()
+            
+        else:
+            
+            self._stabilizerPid.stop()
+            
+            
+    def start(self):
+        
+        self._sensor.start()
+        super().start()
+        
+        
+    def stop(self):
+        
+        if self._stabilizerPid.isRunning():
+            self._stabilizerPid.stop()
+            
+        super().stop()
+        self._sensor.stop()
