@@ -110,7 +110,7 @@ class Driver(object):
         Set the throttle.
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.        
         '''
-        self.setMotionVector(throttle, self._direction)
+        self.setMotionVector(throttle, self.getDirection())
         
     
     def getThrottle(self):
@@ -126,7 +126,7 @@ class Driver(object):
         Set the direction.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
-        self.setMotionVector(self._throttle, direction)
+        self.setMotionVector(self.getThrottle(), direction)
         
     
     def getDirection(self):
@@ -268,37 +268,12 @@ class Driver(object):
         return self._mode
 
 
-class SmartDriver(Driver):
+class StabilizedDriver(object):
     '''
-    Controls the motor set in a smarty way
+    Controls the driver in a smarty way
     '''
     
     MAX_ANG_SPEED = 10.0 #degrees / second
-    
-    @staticmethod
-    def createForRobot(sensor):
-        '''
-        Creates a new motor driver for robot context
-        @return: The driver object
-        '''
-        
-        driver = SmartDriver(sensor)
-        driver.setMotors(Motor(1), Motor(0))
-        
-        return driver
-    
-
-    @staticmethod
-    def createForTesting(sensor):
-        '''
-        Creates a new motor driver for testing context
-        @return: The driver object
-        '''
-        
-        driver = SmartDriver(sensor)
-        driver.setMotors(MotorDummy(1), MotorDummy(0))
-        
-        return driver
     
     
     def __init__(self, sensor):
@@ -309,11 +284,13 @@ class SmartDriver(Driver):
         '''
         
         super().__init__()
-        
-        self._direction = 0.0
-                
         self._sensor = sensor
-        self._stabilizerPid = Pid(0.02, 1, self._readCurrentValues, self._setPidOutput, "Driver-PID")
+        
+        self._directionTarget = 0.0
+        
+        self._stabilizerPid = Pid(0.1, 1, self._readCurrentValues, self._setPidOutput, "Driver-PID")
+        self._stabilizerPid.setProportionalConstants([1.0])
+        self._stabilizerPid.setIntegralConstants([0.0])
         
     
     def _readCurrentValues(self):
@@ -323,15 +300,18 @@ class SmartDriver(Driver):
     
     def _setPidOutput(self, pidOuput):
         
-        super().setDirection(pidOuput)
+        throttle = self._driver.getThrottle()
+        super().setMotionVector(throttle, pidOuput[0])
         
         
     def setMotionVector(self, throttle, direction):
         
-        if super().getMode() == Driver.MODE_NORMAL:
-            super().setThrottle(throttle)
-            self._direction = -direction if throttle > 0.0 else direction
-            self._stabilizerPid.setTargets([self._direction * SmartDriver.MAX_ANG_SPEED / 100.0])
+        if self._driver.getMode() == Driver.MODE_NORMAL:
+            
+            super().setMotionVector(throttle, super().getDirection())
+            self._directionTarget = -direction if throttle > 0.0 else direction
+            self._stabilizerPid.setTargets([self._directionTarget * StabilizedDriver.MAX_ANG_SPEED / 100.0])
+            
             if throttle == 0.0 and self._stabilizerPid.isRunning():                
                 self._stabilizerPid.stop()                
             elif throttle != 0.0 and not self._stabilizerPid.isRunning():                
@@ -339,33 +319,15 @@ class SmartDriver(Driver):
                 
         else:
             super().setMotionVector(throttle, direction)
-            
 
-    def setDirection(self, direction):
-        
-        throttle = self.getThrottle()
-        self.setMotionVector(throttle, direction)
-        
-        
-    def setThrottle(self, throttle):
-        
-        self.setMotionVector(throttle, self._direction)
-        
-        
+    
     def getDirection(self):
-        
-        return self._direction
+        '''
+        Get the direction.
+        @return: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
+        '''
+        return self._directionTarget
     
-    
-    def getThrottle(self):
-        
-        return super().getThrottle()
-        
-        
-    def setNeutral(self):
-        
-        self.setMotionVector(0.0, 0.0)
-
     
     def setMode(self, mode):
         
@@ -394,3 +356,4 @@ class SmartDriver(Driver):
             
         super().stop()
         self._sensor.stop()
+        
