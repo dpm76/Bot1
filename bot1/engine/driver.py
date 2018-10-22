@@ -275,6 +275,31 @@ class StabilizedDriver(object):
     
     MAX_ANG_SPEED = 10.0 #degrees / second
     
+    @staticmethod
+    def createForRobot(imu):
+        '''
+        Creates a new motor driver for robot context
+        @return: The driver object
+        '''
+        
+        driver = StabilizedDriver(imu)
+        driver.setMotors(Motor(1), Motor(0))
+        
+        return driver
+    
+
+    @staticmethod
+    def createForTesting(imu):
+        '''
+        Creates a new motor driver for testing context
+        @return: The driver object
+        '''
+        
+        driver = StabilizedDriver(imu)
+        driver.setMotors(MotorDummy(1), MotorDummy(0))
+        
+        return driver
+
     
     def __init__(self, sensor):
         '''
