@@ -268,7 +268,7 @@ class Driver(object):
         return self._mode
 
 
-class StabilizedDriver(object):
+class StabilizedDriver(Driver):
     '''
     Controls the driver in a smarty way
     '''
@@ -325,13 +325,13 @@ class StabilizedDriver(object):
     
     def _setPidOutput(self, pidOuput):
         
-        throttle = self._driver.getThrottle()
+        throttle = super().getThrottle()
         super().setMotionVector(throttle, pidOuput[0])
         
         
     def setMotionVector(self, throttle, direction):
         
-        if self._driver.getMode() == Driver.MODE_NORMAL:
+        if super().getMode() == Driver.MODE_NORMAL:
             
             super().setMotionVector(throttle, super().getDirection())
             self._directionTarget = -direction if throttle > 0.0 else direction
