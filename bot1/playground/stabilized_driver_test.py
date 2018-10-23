@@ -10,6 +10,10 @@ driver.setThrottle(0.1)
 time.sleep(5)
 driver.setThrottle(10)
 time.sleep(5)
+driver.setThrottle(0)
+time.sleep(5)
+driver.setThrottle(0.2)
+time.sleep(5)
 driver.stop()
 
 
