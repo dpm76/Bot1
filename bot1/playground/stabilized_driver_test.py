@@ -1,19 +1,36 @@
-from sensor.imu6050 import Imu6050
+#from sensor.imu6050 import Imu6050
+from sensor.imu_dummy import ImuDummy
 from engine.driver import StabilizedDriver
+import logging
 import time
 
-imu = Imu6050()
+logging.basicConfig(level=logging.DEBUG)
+
+imu = ImuDummy()
 driver = StabilizedDriver.createForTesting(imu)
 
 driver.start()
-driver.setThrottle(0.1)
-time.sleep(5)
-driver.setThrottle(10)
-time.sleep(5)
-driver.setThrottle(0)
-time.sleep(5)
-driver.setThrottle(0.2)
-time.sleep(5)
+driver.setThrottle(1.0)
+time.sleep(1)
+logging.info("**** Direction right ****")
+driver.setDirection(50.0)
+time.sleep(1)
+logging.info("**** Direction left ****")
+driver.setDirection(-50.0)
+time.sleep(1)
+logging.info("**** Change PID KP ****")
+driver.setProportionalPidConstant(2.0)
+time.sleep(1)
+logging.info("**** Change to rear ****")
+driver.setThrottle(-1.0)
+time.sleep(1)
+logging.info("**** Change PID KP ****")
+driver.setProportionalPidConstant(1.0)
+time.sleep(1)
+logging.info("**** Direction right ****")
+driver.setDirection(50.0)
+time.sleep(1)
+logging.info("**** Direction left ****")
+driver.setDirection(-50.0)
+time.sleep(1)
 driver.stop()
-
-

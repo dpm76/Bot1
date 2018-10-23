@@ -328,7 +328,8 @@ class StabilizedDriver(Driver):
     def _setPidOutput(self, pidOuput):
         
         throttle = super().getThrottle()
-        super().setMotionVector(throttle, pidOuput[0])
+        direction = -pidOuput[0] if throttle > 0.0 else pidOuput[0]
+        super().setMotionVector(throttle, direction)
         
         
     def setMotionVector(self, throttle, direction):

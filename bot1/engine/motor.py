@@ -197,7 +197,7 @@ class MotorDummy(object):
         
         msg = "motor {0}: {1}".format(self._motorId, message)
         logging.debug(msg)
-        print(msg)
+        #print(msg)
         
     
     def start(self):
