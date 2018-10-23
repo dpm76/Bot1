@@ -383,4 +383,23 @@ class StabilizedDriver(Driver):
             
         super().stop()
         self._sensor.stop()
+
         
+    def setProportionalPidConstant(self, kp):
+        
+        self._stabilizerPid.setProportionalConstants([kp])
+        
+        
+    def getProportionalPidConstant(self):
+        
+        return self._stabilizerPid.getProportionalConstants()[0]
+    
+    
+    def setIntegralPidConstant(self, ki):
+        
+        self._stabilizerPid.setProportionalConstants([ki])
+        
+        
+    def getIntegralPidConstant(self):
+        
+        return self._stabilizerPid.getIntegralConstants()[0]
