@@ -335,7 +335,7 @@ class StabilizedDriver(Driver):
     def _setPidOutput(self, pidOuput):
         
         throttle = super().getThrottle()
-        direction = -pidOuput[0] if throttle > 0.0 else pidOuput[0]
+        direction = -pidOuput[0]
         super().setMotionVector(throttle, direction)
         
         
@@ -344,7 +344,7 @@ class StabilizedDriver(Driver):
         Set the motion vector, that is throttle and direction.
         Actual effect depends on the current driving mode.
         
-        The direction set the angular speed target to turn.
+        The direction set the angular speed target for turning.
         
         @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
         @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
