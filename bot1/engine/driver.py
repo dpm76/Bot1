@@ -270,7 +270,7 @@ class Driver(object):
 
 class StabilizedDriver(Driver):
     '''
-    Controls the driver in a smarty way
+    Controls the driver stabilizing the direction
     '''
     
     PID_PERIOD = 0.1 #seconds
@@ -281,6 +281,9 @@ class StabilizedDriver(Driver):
     def createForRobot(imu):
         '''
         Creates a new motor driver for robot context
+        
+        @param imu: IMU/MPU in order to know the device's attitude. 
+             The sensor will be initialized by the returned object's start-method
         @return: The driver object
         '''
         
@@ -294,6 +297,9 @@ class StabilizedDriver(Driver):
     def createForTesting(imu):
         '''
         Creates a new motor driver for testing context
+        
+        @param imu: IMU/MPU in order to know the device's attitude. 
+             The sensor will be initialized by the returned object's start-method
         @return: The driver object
         '''
         
@@ -307,7 +313,8 @@ class StabilizedDriver(Driver):
         '''
         Constructor
         
-        @param sensor: IMU/MPU in order to know the device's attitude 
+        @param sensor: IMU/MPU in order to know the device's attitude. 
+             The sensor will be initialized by this object's start-method.
         '''
         
         super().__init__()
@@ -333,6 +340,15 @@ class StabilizedDriver(Driver):
         
         
     def setMotionVector(self, throttle, direction):
+        '''
+        Set the motion vector, that is throttle and direction.
+        Actual effect depends on the current driving mode.
+        
+        The direction set the angular speed target to turn.
+        
+        @param throttle: Throttle range is [-100, 100], where negative values mean backwards and positive ones mean forwards.
+        @param direction: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
+        '''
         
         if super().getMode() == Driver.MODE_NORMAL:
             
@@ -358,6 +374,11 @@ class StabilizedDriver(Driver):
     
     
     def setMode(self, mode):
+        '''
+        Set driver mode
+        
+        @param mode: Driving mode. See Driver.MODE_*
+        '''
         
         super().setMode(mode)
         
@@ -372,12 +393,18 @@ class StabilizedDriver(Driver):
             
             
     def start(self):
+        '''
+        Starts the driver
+        '''
         
         self._sensor.start()
         super().start()
         
         
     def stop(self):
+        '''
+        Stops the driver
+        '''
         
         if self._stabilizerPid.isRunning():
             self._stabilizerPid.stop()
@@ -387,20 +414,40 @@ class StabilizedDriver(Driver):
 
         
     def setProportionalPidConstant(self, kp):
+        '''
+        Sets the proportional constant (KP) for the stabilization.
+        
+        @param kp: The proportional constant
+        '''
         
         self._stabilizerPid.setProportionalConstants([kp])
         
         
     def getProportionalPidConstant(self):
+        '''
+        Gets the proportional constant (KP) for the stabilization.
+        
+        @return: The proportional constant
+        '''
         
         return self._stabilizerPid.getProportionalConstants()[0]
     
     
     def setIntegralPidConstant(self, ki):
+        '''
+        Sets the integral constant (KI) for the stabilization.
+        
+        @param ki: The integral constant
+        '''
         
         self._stabilizerPid.setProportionalConstants([ki])
         
         
     def getIntegralPidConstant(self):
+        '''
+        Gets the integral constant (KI) for the stabilization.
+        
+        @return: The integral constant
+        '''
         
         return self._stabilizerPid.getIntegralConstants()[0]

@@ -163,6 +163,11 @@ class Imu6050(I2CSensor):
    
     
     def readAccelY(self):
+        '''
+        Reads accel of Y-axis
+        
+        return: acceleration as m/s²
+        '''
         
         self._readRawAccelY() * Imu6050.ACCEL2MS2
     
