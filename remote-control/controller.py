@@ -99,7 +99,11 @@ class Controller(object):
             
             if index == 3: #Usually the horizontal axis of the left stick
                 #Direction
-                self._driver.setDirection(axisValue)
+                if self._driver.getMode() == Driver.MODE_NORMAL:
+                    self._driver.setDirection(-axisValue * 2.0)
+                else:
+                    self._driver.setDirection(axisValue / 2.0)
+                
                 
             elif index == 4: #Usually the vertical axis of the left stick
                 #Throttle
@@ -108,7 +112,7 @@ class Controller(object):
                 #    negative values are fordwards
                 #    positive values are backwards
                 # Therefore the passed value is negated.
-                self._driver.setThrottle(-axisValue)
+                self._driver.setThrottle(axisValue / 2.0)
     
 
     def _onJoystickButtonPressed(self, sender, index):
