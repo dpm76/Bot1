@@ -10,6 +10,8 @@ try:
     while True:
         print(imu.readAngleZ())
         time.sleep(0.1)
+except KeyboardInterrupt:
+    print("\nBye!")
 finally:
     imu.stop()
     

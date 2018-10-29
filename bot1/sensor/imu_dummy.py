@@ -11,12 +11,15 @@ class ImuDummy(object):
     Intended for testing.
     '''
     
-    def __init__(self):
+    def __init__(self, fixedAngSpeeds):
         '''
         Constructor
+        
+        @param fixedAngSpeeds: Array with the angle speed values 
         '''
         
-        pass
+        self._fixedAngSpeeds = fixedAngSpeeds
+        
     
     def start(self):
         '''
@@ -41,5 +44,5 @@ class ImuDummy(object):
         returns: Angular speed as degrees/second
         '''
         
-        return 1.0
+        return self._fixedAngSpeeds[2]
     
