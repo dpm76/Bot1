@@ -42,7 +42,6 @@ def callibrateMotor(motor, imu):
     motor.start()
 
     throttle = 0.0
-    angSpeed = 0.0
 
     try:
 

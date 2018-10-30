@@ -46,3 +46,8 @@ class ImuDummy(object):
         
         return self._fixedAngSpeeds[2]
     
+    
+    def readAngleZ(self):
+        
+        return 0.0
+    
