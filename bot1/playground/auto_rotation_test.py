@@ -15,9 +15,11 @@ from sensor.imu6050 import Imu6050
 logging.basicConfig(level=logging.DEBUG)
 
 MAX_THROTTLE = 40.0
+MIN_THROTTLE = 25.0
 
 PK = 0.05
-PI = 0.01
+PI = 0.03
+PD = 0.04
 
 def turnTo(targetAngle, imu, driver):
 
@@ -29,11 +31,12 @@ def turnTo(targetAngle, imu, driver):
     err1 = (targetAngle-currentAngle)%360.0
     err2 = (currentAngle-targetAngle)%360.0
     integral = 0.0
+    lastError = 0.0
     if err1 < err2:
         err = err1
     else:
         err = err2
-    while err > 5.0:
+    while abs(err) > 5.0:
         currentTime = time.time()
         currentAngle = imu.readAngleZ()
         logging.debug("current angle = {0:.3f}°".format(currentAngle))
@@ -43,13 +46,17 @@ def turnTo(targetAngle, imu, driver):
         logging.debug("current err2 = {0:.3f}°".format(err2))
         if err1 < err2:
             err = -err1
+            minThrottle = -MIN_THROTTLE
         else:
             err = err2
+            minThrottle = MIN_THROTTLE
 
         dt = currentTime - lastTime
         integral += err * dt
-        direction = (PK * err) + (PI * integral)
+        deriv = (err - lastError) / dt
+        direction = minThrottle + (PK * err) + (PI * integral) + (PD * deriv)
         lastTime = currentTime
+        lastError = err
             
         if direction > MAX_THROTTLE:
             direction = MAX_THROTTLE
@@ -78,6 +85,14 @@ try:
     turnTo(45.0, imu, driver)
     time.sleep(1)
     turnTo(315.0, imu, driver)
+    time.sleep(1)
+    turnTo(0.0, imu, driver)
+    time.sleep(1)
+    turnTo(330.0, imu, driver)
+    time.sleep(1)
+    turnTo(300.0, imu, driver)
+    time.sleep(1)
+    turnTo(0.0, imu, driver)
 
 finally:
     driver.stop()
