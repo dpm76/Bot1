@@ -15,7 +15,7 @@ class WheelMotion(object):
     Wheel motion sensor
     '''
     
-    POLL_TIMEOUT = 200
+    POLL_TIMEOUT = 1000
 
     def __init__(self, gpioPort):
         '''
@@ -31,8 +31,8 @@ class WheelMotion(object):
         
         self._stepCount = 0
         
-        SysfsWriter.writeOnce("in", "/sys/class/gpio/gpio{0}/direction".format(self._gpioId))
-        
+        SysfsWriter.writeOnce("in", "/sys/class/gpio/gpio{0}/direction".format(self._gpioPort))
+        SysfsWriter.writeOnce("rising", "/sys/class/gpio/gpio{0}/edge".format(self._gpioPort))
     
     def start(self):
         '''
@@ -102,8 +102,8 @@ class WheelMotion(object):
         try:
             while self._isRunning:
         
-                _, event = pollingObj.poll(WheelMotion.POLL_TIMEOUT)
-                if event == select.POLLPRI:
+                eventList = pollingObj.poll(WheelMotion.POLL_TIMEOUT)
+                if len(eventList) != 0:
                     sysfile.seek(0)
                     if sysfile.readline()[0] == '0':
                         self._stepCount += 1

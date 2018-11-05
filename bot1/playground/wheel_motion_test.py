@@ -9,8 +9,8 @@ import time
 from sensor.wheel import WheelMotion
 from engine.motor import Motor
 
-THROTTLE = 25
-MAX_STEPS = 50
+THROTTLE = 15
+MAX_STEPS = 10
 TIMEOUT = 0.1
 
 sensor = WheelMotion(67)
@@ -26,6 +26,8 @@ try:
         steps = sensor.getTravelSteps()
         print("steps = {0}".format(steps))
         time.sleep(TIMEOUT)
+    motor.setNeutralThrottle()
+    print("Total steps = {0}".format(sensor.getTravelSteps()))
     sensor.stop()
     time.sleep(1)
     sensor.start()
@@ -35,6 +37,8 @@ try:
         steps = sensor.getTravelSteps()
         print("steps = {0}".format(steps))
         time.sleep(TIMEOUT)
+    motor.setNeutralThrottle()
+    print("Total steps = {0}".format(sensor.getTravelSteps()))
     sensor.stop()
     
 finally:
