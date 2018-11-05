@@ -9,20 +9,31 @@ import time
 from sensor.wheel import WheelMotion
 from engine.motor import Motor
 
-THROTTLE = 15
-MAX_STEPS = 10
-TIMEOUT = 1
+THROTTLE = 80.0
+MAX_STEPS = 20
+TIMEOUT = 0.02
 
 done = False
 
 def onStep():
     
-    steps = sensor.getTravelSteps()
-    print("steps = {0}".format(steps))
-    if sensor.getTravelSteps() >= MAX_STEPS:        
-        motor.setNeutralThrottle()        
+    if sensor.getTravelSteps() >= MAX_STEPS:
+        global done
         done = True
         
+
+def rotate(throttle):
+
+    global done
+
+    sensor.start()    
+    done = False
+    motor.setThrottle(throttle)
+    while not done:
+        time.sleep(TIMEOUT)    
+    print("Total steps = {0}".format(sensor.getTravelSteps()))
+    sensor.stop()
+
 
 sensor = WheelMotion(67)
 sensor.onStep += onStep
@@ -32,23 +43,17 @@ motor.start()
 
 try:
      
-    sensor.start()
-    motor.setThrottle(THROTTLE)
-    done = False
-    while not done:        
-        time.sleep(TIMEOUT)    
-    print("Total steps = {0}".format(sensor.getTravelSteps()))
-    sensor.stop()
-    
+    rotate(THROTTLE)
+    rotate(THROTTLE/2.0)
+    rotate(THROTTLE/4.0)
+    motor.setNeutralThrottle()
     time.sleep(1)
         
-    sensor.start()
-    motor.setThrottle(-THROTTLE)
-    done = False
-    while not done:
-        time.sleep(TIMEOUT)    
-    print("Total steps = {0}".format(sensor.getTravelSteps()))
-    sensor.stop()
+    rotate(-THROTTLE)
+    rotate(-THROTTLE/2.0)
+    rotate(-THROTTLE/4.0)
+    motor.setNeutralThrottle()
+    time.sleep(1)
     
 finally:
     motor.stop()
