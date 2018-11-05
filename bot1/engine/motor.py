@@ -152,9 +152,9 @@ class Motor(object):
         """
         
         self._throttle = 0.0
-        self._duty = Motor.NEUTRAL_DUTY
-        SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
-        self._sysfsWriter.write(str(self._duty))       
+        self._duty = Motor.NEUTRAL_DUTY        
+        self._sysfsWriter.write(str(self._duty))
+        SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))       
         
         
     def stop(self):
