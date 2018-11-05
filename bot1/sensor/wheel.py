@@ -4,10 +4,10 @@ Created on 2 nov. 2018
 @author: david
 '''
 import select
-
 from threading import Thread
 
 from engine.sysfs_writer import SysfsWriter
+from state.event import EventHook
 
 
 class WheelMotion(object):
@@ -24,15 +24,18 @@ class WheelMotion(object):
         @param gpioPort: GPIO port where the sensor is attached to.
         '''
         
+        self.onStep = EventHook()
+        
         self._gpioPort = gpioPort
         self._metersPerStep = 0.0
         self._isRunning = False
-        self._pollThread = None
+        self._pollThread = None        
         
         self._stepCount = 0
         
         SysfsWriter.writeOnce("in", "/sys/class/gpio/gpio{0}/direction".format(self._gpioPort))
         SysfsWriter.writeOnce("rising", "/sys/class/gpio/gpio{0}/edge".format(self._gpioPort))
+        
     
     def start(self):
         '''
@@ -107,6 +110,7 @@ class WheelMotion(object):
                     sysfile.seek(0)
                     if sysfile.readline()[0] == '0':
                         self._stepCount += 1
+                        self.onStep.fire()
         
         finally:
         
