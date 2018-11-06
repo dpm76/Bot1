@@ -22,7 +22,7 @@ def onStep():
         done = True
         
 
-def rotate(throttle):
+def travel(throttle):
 
     global done
 
@@ -43,15 +43,15 @@ motor.start()
 
 try:
      
-    rotate(THROTTLE)
-    rotate(THROTTLE/2.0)
-    rotate(THROTTLE/4.0)
+    travel(THROTTLE)
+    travel(THROTTLE/2.0)
+    travel(THROTTLE/4.0)
     motor.setNeutralThrottle()
     time.sleep(1)
         
-    rotate(-THROTTLE)
-    rotate(-THROTTLE/2.0)
-    rotate(-THROTTLE/4.0)
+    travel(-THROTTLE)
+    travel(-THROTTLE/2.0)
+    travel(-THROTTLE/4.0)
     motor.setNeutralThrottle()
     time.sleep(1)
     
