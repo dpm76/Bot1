@@ -54,7 +54,7 @@ class BasicPilot(object):
         
         if self._state == PilotState.Stopped and self._wheelMotionSensor != None:
             self._travelStepsTarget = steps
-            self._wheelMotionSensor.start()
+            self._wheelMotionSensor.resetStepCounter()
             self._state = PilotState.Travelling
             self._driver.setThrottle(throttle)            
         
@@ -81,11 +81,10 @@ class BasicPilot(object):
     
     def stop(self):
         
+        self._driver.setNeutral()
         if self._state == PilotState.Travelling and self._wheelMotionSensor != None:
-            self._wheelMotionSensor.stop()
             self._travelStepsTarget = 0
             
-        self._driver.setNeutral()
         self._state = PilotState.Stopped
         
     

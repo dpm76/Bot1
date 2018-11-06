@@ -60,6 +60,14 @@ class WheelMotion(object):
             self._pollThread.join()
     
     
+    def resetStepCounter(self):
+        '''
+        Sets the step counter to zero
+        '''
+        
+        self._stepCount = 0
+    
+    
     def setMetersPerStep(self, metersPerStep):
         '''
         Sets the distance travelled along one step, i.e. between two wheel holes.

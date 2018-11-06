@@ -23,10 +23,14 @@ wheelSensor = WheelMotion(67)
 pilot = BasicPilot(driver).setWheelMotionSensor(wheelSensor)
 
 try:
+    wheelSensor.start()
     driver.start()
-    pilot.Travel(40, TRAVEL_THROTTLE)
+    pilot.travel(40, TRAVEL_THROTTLE)
+    waitPilot(pilot)
+    pilot.travel(40, -TRAVEL_THROTTLE)
     waitPilot(pilot)
 
 finally:
-    wheelSensor.stop()
     driver.stop()
+    wheelSensor.stop()
+    
