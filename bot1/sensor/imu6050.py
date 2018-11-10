@@ -207,8 +207,8 @@ class Imu6050(I2CSensor):
         self._bus.write_byte_data(self._address, reg.PWR_MGM1, reg.CLK_SEL_X)
         #1kHz (as DPLF_CG_6) / (SMPLRT_DIV +1) => sample rate @50Hz)
         self._bus.write_byte_data(self._address, reg.SMPRT_DIV, 19)
-        #DLPF_CFG_5: Low-pass filter @10Hz; analog sample rate @1kHz
-        self._bus.write_byte_data(self._address, reg.CONFIG, reg.DLPF_CFG_5)
+        #DLPF_CFG_6: Low-pass filter @5Hz; analog sample rate @1kHz
+        self._bus.write_byte_data(self._address, reg.CONFIG, reg.DLPF_CFG_6)
         self._bus.write_byte_data(self._address, reg.GYRO_CONFIG, reg.GFS_250)
         self._bus.write_byte_data(self._address, reg.ACCEL_CONFIG, reg.AFS_2)
         self._bus.write_byte_data(self._address, reg.PWR_MGM1, 0)

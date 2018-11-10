@@ -17,9 +17,12 @@ logging.basicConfig(level=logging.DEBUG)
 MAX_THROTTLE = 40.0
 MIN_THROTTLE = 25.0
 
-PK = 0.05
-PI = 0.03
-PD = 0.04
+PRECISSION_DEGREES = 2.0
+PID_PERIOD = 0.02
+
+PK = 0.01
+PI = 0.01
+PD = 0.005
 
 def turnTo(targetAngle, imu, driver):
 
@@ -33,10 +36,10 @@ def turnTo(targetAngle, imu, driver):
     integral = 0.0
     lastError = 0.0
     if err1 < err2:
-        err = err1
+        err = -err1
     else:
         err = err2
-    while abs(err) > 5.0:
+    while abs(err) > PRECISSION_DEGREES:
         currentTime = time.time()
         currentAngle = imu.readAngleZ()
         logging.debug("current angle = {0:.3f}°".format(currentAngle))
@@ -64,7 +67,7 @@ def turnTo(targetAngle, imu, driver):
             direction = -MAX_THROTTLE
         logging.debug("direction = {0}".format(direction))
         driver.setDirection(direction)        
-        time.sleep(0.1)
+        time.sleep(PID_PERIOD)
         
     logging.info("Target reached")
     driver.setNeutral()
@@ -88,11 +91,12 @@ try:
     time.sleep(1)
     turnTo(0.0, imu, driver)
     time.sleep(1)
-    turnTo(330.0, imu, driver)
+    turnTo(180.0, imu, driver)
     time.sleep(1)
-    turnTo(300.0, imu, driver)
+    turnTo(270.0, imu, driver)
     time.sleep(1)
     turnTo(0.0, imu, driver)
+    time.sleep(1)
 
 finally:
     driver.stop()
