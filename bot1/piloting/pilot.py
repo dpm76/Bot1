@@ -22,11 +22,11 @@ class BasicPilot(object):
     #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
     ROTATION_MAX_THROTTLE = 40.0
     ROTATION_MIN_THROTTLE = 25.0        
-    ROTATION_PRECISION_DEGREES = 2.0
+    ROTATION_PRECISION_DEGREES = 5.0
     ROTATION_PID_PERIOD = 0.02    
-    ROTATION_KP = 0.01
-    ROTATION_KI = 0.01
-    ROTATION_KD = 0.005
+    ROTATION_KP = 0.05
+    ROTATION_KI = 0.02
+    ROTATION_KD = 0.05
     
     def __init__(self, driver):
         
@@ -95,6 +95,7 @@ class BasicPilot(object):
             else:
                 err = err2
             while abs(err) > BasicPilot.ROTATION_PRECISION_DEGREES:
+                time.sleep(BasicPilot.ROTATION_PID_PERIOD)
                 currentTime = time.time()
                 currentAngle = self._imu.readAngleZ()
                 err1 = (targetAngle-currentAngle)%360.0
@@ -109,18 +110,18 @@ class BasicPilot(object):
                 dt = currentTime - lastTime
                 integral += err * dt
                 deriv = (err - lastError) / dt
-                direction = minThrottle + (BasicPilot.KP * err) + (BasicPilot.KI * integral) + (BasicPilot.KD * deriv)
+                direction = minThrottle + (BasicPilot.ROTATION_KP * err) + (BasicPilot.ROTATION_KI * integral) + (BasicPilot.ROTATION_KD * deriv)
                 lastTime = currentTime
                 lastError = err
-                    
+  
                 if direction > BasicPilot.ROTATION_MAX_THROTTLE:
                     direction = BasicPilot.ROTATION_MAX_THROTTLE
                 elif direction < -BasicPilot.ROTATION_MAX_THROTTLE:
                     direction = -BasicPilot.ROTATION_MAX_THROTTLE
-                self._driver.setDirection(direction)        
-                time.sleep(BasicPilot.ROTATION_PID_PERIOD)
-                
+                self._driver.setDirection(direction)
+
             self._driver.setNeutral()
+                    
         
         elif self._state != PilotState.Stopped:
             raise Exception("The robot should be stopped first.")

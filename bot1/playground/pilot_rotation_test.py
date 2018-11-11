@@ -11,13 +11,26 @@ from piloting.pilot import BasicPilot
 from sensor.imu6050 import Imu6050
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def turnTo(pilot, imu, angle):
     
     logging.info("Turn target: {0}°".format(angle))
     pilot.turnTo(angle)
-    logging.info("Angle after turn: {0:.3f}°".format(imu.readAngleZ()))    
+    endAngle = imu.readAngleZ()
+    logging.info("Angle after turn: {0:.3f}°".format(endAngle))
+    
+    diff1 = (angle-endAngle)%360.0
+    diff2 = (endAngle-angle)%360.0
+    if diff1 < diff2:
+        diff = diff1
+    else:
+        diff = diff2    
+    if diff >= BasicPilot.ROTATION_PRECISION_DEGREES:
+        logging.error("The angle difference {0:.3f} is greater than {1}!"\
+            .format(diff, BasicPilot.ROTATION_PRECISION_DEGREES))
+    else:
+        logging.info("Angle OK")
     time.sleep(1)
 
 
@@ -29,16 +42,15 @@ imu.start()
 logging.info("Initializing driver")
 driver.start()
 
-pilot = BasicPilot(driver, imu)
-
 try:
+    pilot = BasicPilot(driver).setImuSensor(imu)
     logging.info("Start")
     turnTo(pilot, imu, 45.0)
     turnTo(pilot, imu, 315.0)
     turnTo(pilot, imu, 0.0)
-    turnTo(pilot, imu, 180.0)
-    turnTo(pilot, imu, 270.0)
-    turnTo(pilot, imu, 0.0)
+    #turnTo(pilot, imu, 180.0)
+    #turnTo(pilot, imu, 270.0)
+    #turnTo(pilot, imu, 0.0)
     logging.info("Finish")
 
 finally:
