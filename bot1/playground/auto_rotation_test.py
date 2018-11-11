@@ -17,12 +17,12 @@ logging.basicConfig(level=logging.DEBUG)
 MAX_THROTTLE = 40.0
 MIN_THROTTLE = 25.0
 
-PRECISSION_DEGREES = 2.0
+PRECISION_DEGREES = 2.0
 PID_PERIOD = 0.02
 
-PK = 0.01
-PI = 0.01
-PD = 0.005
+KP = 0.01
+KI = 0.01
+KD = 0.005
 
 def turnTo(targetAngle, imu, driver):
 
@@ -39,7 +39,7 @@ def turnTo(targetAngle, imu, driver):
         err = -err1
     else:
         err = err2
-    while abs(err) > PRECISSION_DEGREES:
+    while abs(err) > PRECISION_DEGREES:
         currentTime = time.time()
         currentAngle = imu.readAngleZ()
         logging.debug("current angle = {0:.3f}°".format(currentAngle))
@@ -57,7 +57,7 @@ def turnTo(targetAngle, imu, driver):
         dt = currentTime - lastTime
         integral += err * dt
         deriv = (err - lastError) / dt
-        direction = minThrottle + (PK * err) + (PI * integral) + (PD * deriv)
+        direction = minThrottle + (KP * err) + (KI * integral) + (KD * deriv)
         lastTime = currentTime
         lastError = err
             

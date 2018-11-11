@@ -4,6 +4,10 @@ Created on 06/11/2018
 @author: david
 '''
 from enum import Enum, unique
+import time
+
+from engine.driver import Driver
+
 
 @unique
 class PilotState(Enum):
@@ -14,7 +18,15 @@ class PilotState(Enum):
 
 
 class BasicPilot(object):
-        
+    
+    #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
+    ROTATION_MAX_THROTTLE = 40.0
+    ROTATION_MIN_THROTTLE = 25.0        
+    ROTATION_PRECISION_DEGREES = 2.0
+    ROTATION_PID_PERIOD = 0.02    
+    ROTATION_KP = 0.01
+    ROTATION_KI = 0.01
+    ROTATION_KD = 0.005
     
     def __init__(self, driver):
         
@@ -65,12 +77,50 @@ class BasicPilot(object):
             raise Exception("There is no wheel motion sensor!")
     
     
-    def rotate(self):
+    def turnTo(self, targetAngle):
         
         if self._state == PilotState.Stopped and self._imu != None:
-            #TODO: Implement rotatation
             
-            pass
+            self._driver.setNeutral()
+            self._driver.setMode(Driver.MODE_ROTATE)
+            self._imu.updateGyroTime()
+            lastTime = time.time()
+            currentAngle = self._imu.readAngleZ()
+            err1 = (targetAngle-currentAngle)%360.0
+            err2 = (currentAngle-targetAngle)%360.0
+            integral = 0.0
+            lastError = 0.0
+            if err1 < err2:
+                err = -err1
+            else:
+                err = err2
+            while abs(err) > BasicPilot.ROTATION_PRECISION_DEGREES:
+                currentTime = time.time()
+                currentAngle = self._imu.readAngleZ()
+                err1 = (targetAngle-currentAngle)%360.0
+                err2 = (currentAngle-targetAngle)%360.0
+                if err1 < err2:
+                    err = -err1
+                    minThrottle = -BasicPilot.ROTATION_MIN_THROTTLE
+                else:
+                    err = err2
+                    minThrottle = BasicPilot.ROTATION_MIN_THROTTLE
+        
+                dt = currentTime - lastTime
+                integral += err * dt
+                deriv = (err - lastError) / dt
+                direction = minThrottle + (BasicPilot.KP * err) + (BasicPilot.KI * integral) + (BasicPilot.KD * deriv)
+                lastTime = currentTime
+                lastError = err
+                    
+                if direction > BasicPilot.ROTATION_MAX_THROTTLE:
+                    direction = BasicPilot.ROTATION_MAX_THROTTLE
+                elif direction < -BasicPilot.ROTATION_MAX_THROTTLE:
+                    direction = -BasicPilot.ROTATION_MAX_THROTTLE
+                self._driver.setDirection(direction)        
+                time.sleep(BasicPilot.ROTATION_PID_PERIOD)
+                
+            self._driver.setNeutral()
         
         elif self._state != PilotState.Stopped:
             raise Exception("The robot should be stopped first.")
