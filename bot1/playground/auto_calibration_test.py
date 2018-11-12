@@ -4,9 +4,14 @@ Created on 29 oct. 2018
 @author: david
 '''
 
+import logging
+from time import sleep
+
 from engine.motor import Motor
 from sensor.imu6050 import Imu6050
-from time import sleep
+
+
+logging.basicConfig(level=logging.INFO)
 
 MAX_THROTTLE = 30.0
 THROTTLE_STEP = 5.0
@@ -38,32 +43,32 @@ def callibrate(motor, imu, throttleStep):
 
 def callibrateMotor(motor, imu):
 
-    print("Init motor")
+    logging.info("Init motor")
     motor.start()
 
     throttle = 0.0
 
     try:
 
-        print("fordwards")
+        logging.info("fordwards")
         accThrottle = 0.0
         for i in range(NUM_PASSES):
             throttle = callibrate(motor, imu, THROTTLE_STEP)
-            print("pass {0}: min throttle = {1}".format(i, throttle))
+            logging.info("pass {0}: min throttle = {1}".format(i, throttle))
             accThrottle += throttle
         
         avgThrottle = accThrottle / float(NUM_PASSES)
-        print("avg throttle = {0}".format(avgThrottle))
+        logging.info("avg throttle = {0}".format(avgThrottle))
     
-        print("backwards")
+        logging.info("backwards")
         accThrottle = 0.0
         for i in range(NUM_PASSES):
             throttle = callibrate(motor, imu, -THROTTLE_STEP)
-            print("pass {0}: min throttle = {1}".format(i, throttle))
+            logging.info("pass {0}: min throttle = {1}".format(i, throttle))
             accThrottle += throttle
         
         avgThrottle = accThrottle / float(NUM_PASSES)
-        print("avg throttle = {0}".format(avgThrottle))
+        logging.info("avg throttle = {0}".format(avgThrottle))
 
     finally:
 
@@ -74,14 +79,14 @@ imu = Imu6050()
 motor0 = Motor(0)
 motor1 = Motor(1)
 
-print("Init IMU")
+logging.info("Init IMU")
 imu.start()
 
 try:
 
-    print("motor 0")
+    logging.info("motor 0")
     callibrateMotor(motor0, imu)
-    print("motor 1")
+    logging.info("motor 1")
     callibrateMotor(motor1, imu)
 
 finally:

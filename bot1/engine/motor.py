@@ -10,6 +10,7 @@ from os import system
 from os.path import exists
 
 from engine.sysfs_writer import SysfsWriter
+from stabilization.pid import Pid
 
 
 class Motor(object):
@@ -41,7 +42,7 @@ class Motor(object):
         """
         Constructor
         
-        @param motorId: Identificator of the motor. A number between 0 to 3 (in case of quadcopter)  
+        @param motorId: Identificator of the motor. Values are 0 or 1  
         """
         
         pinIndex = motorId
@@ -122,7 +123,7 @@ class Motor(object):
             self._duty = int((self._rangeDuty * absThrottle) + self._minDuty)
         
         elif absThrottle == 0.0:
-            self.setNeutralThrottle()
+            self._setNeutralThrottle()
             
         else: # absThrottle > Motor.MAX_THROTTLE
             self._duty = Motor.MAX_DUTY
@@ -144,9 +145,9 @@ class Motor(object):
         """
         
         self.setThrottle(self._throttle + increment)
+
         
-        
-    def setNeutralThrottle(self):
+    def _setNeutralThrottle(self):
         """
         Set the motor at neutral
         """
@@ -155,6 +156,14 @@ class Motor(object):
         self._duty = Motor.NEUTRAL_DUTY        
         self._sysfsWriter.write(str(self._duty))
         SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))       
+        
+    
+    def setNeutralThrottle(self):
+        """
+        Set the motor at neutral
+        """
+        
+        self._setNeutralThrottle()
         
         
     def stop(self):
@@ -259,4 +268,64 @@ class MotorDummy(object):
         self._log("stop")
 
         self.setNeutralThrottle()        
+        
+
+class StepMotor(Motor):
+    
+    PID_PERIOD = 0.05
+    STEP_SPEED_MAX = 10.0 # steps/s
+    
+    KP = 0.05
+    KI = 0.02
+    KD = 0.05
+    
+    _stepGpios = [67] #TODO: 20181112 DPM: GPIO port for motor #1 
+    
+    def __init__(self, motorId, wheelSensor):
+        
+        super().__init__(motorId)
+        #TODO: 20181112 DPM: The sensor could be get from a pool. The pilot uses the same sensor too.
+        self._wheelSensor = wheelSensor
+        self._pid = Pid(StepMotor.PID_PERIOD, 1, self._readSensorInput, self._setPidOutput, "PID_{0}#{1}".format(type(self).__name__, motorId))\
+            .setProportionalConstants([StepMotor.KP])\
+            .setIntegralConstants([StepMotor.KI])\
+            .setDerivativeConstants([StepMotor.KD])
+        
+        self._stepSpeedTaget = 0.0
+        
+    
+    def _readSensorInput(self):
+        
+        return [-self._wheelSensor.getCurrentStepSpeed()\
+                if self._stepSpeedTaget < 0.0\
+                else self._wheelSensor.getCurrentStepSpeed()]
+    
+    
+    def _setPidOutput(self, output):
+        
+        super().setThrottle(output[0])
+    
+    
+    def start(self):
+        
+        super().start()
+        self._pid.start()
+    
+    
+    def stop(self):
+        self._pid.stop()
+        super().stop()
+        
+                
+    def setNeutralThrottle(self):
+        
+        self.setThrottle(0.0)            
+        super().setNeutralThrottle()
+        self._wheelSensor.notifyStoppedMotor()        
+        
+        
+    def setThrottle(self, throttle):
+        
+        self._stepSpeedTaget = throttle * StepMotor.STEP_SPEED_MAX / 100.0
+        self._pid.setTargets([self._stepSpeedTaget])
         

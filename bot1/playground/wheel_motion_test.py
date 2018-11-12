@@ -4,10 +4,14 @@ Created on 5 nov. 2018
 @author: david
 '''
 
+import logging
 import time
 
-from sensor.wheel import WheelMotion
 from engine.motor import Motor
+from sensor.wheel import WheelMotion
+
+
+logging.basicConfig(level=logging.INFO)
 
 THROTTLE = 80.0
 MAX_STEPS = 20
@@ -31,7 +35,7 @@ def travel(throttle):
     motor.setThrottle(throttle)
     while not done:
         time.sleep(TIMEOUT)    
-    print("Total steps = {0}".format(sensor.getTravelSteps()))
+    logging.info("Total steps = {0}".format(sensor.getTravelSteps()))
     sensor.stop()
 
 

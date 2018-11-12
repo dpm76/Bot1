@@ -5,6 +5,7 @@ Created on 2 nov. 2018
 '''
 import select
 from threading import Thread
+import time
 
 from engine.sysfs_writer import SysfsWriter
 from state.event import EventHook
@@ -32,6 +33,7 @@ class WheelMotion(object):
         self._pollThread = None        
         
         self._stepCount = 0
+        self._stepTime = -1 
         
         SysfsWriter.writeOnce("in", "/sys/class/gpio/gpio{0}/direction".format(self._gpioPort))
         SysfsWriter.writeOnce("rising", "/sys/class/gpio/gpio{0}/edge".format(self._gpioPort))
@@ -44,6 +46,7 @@ class WheelMotion(object):
         
         if self._pollThread == None or not self._pollThread.isAlive():
             self._stepCount = 0
+            self._stepTime = -1            
             self._isRunning = True
             self._pollThread = Thread(target=self._doPoll)
             self._pollThread.start()
@@ -66,6 +69,14 @@ class WheelMotion(object):
         '''
         
         self._stepCount = 0
+        
+        
+    def notifyStoppedMotor(self):
+        '''
+        Tells the sensor the motor is stopped
+        '''
+        
+        self._stepTime = -1        
     
     
     def setMetersPerStep(self, metersPerStep):
@@ -84,7 +95,7 @@ class WheelMotion(object):
         '''
         Gets the number of steps since the sensor was started.
         
-        @return Number of steps.
+        @return: Number of steps.
         '''
         
         return self._stepCount
@@ -94,10 +105,37 @@ class WheelMotion(object):
         '''
         Gets distance travelled since the sensor was started.
         
-        @return Number of steps.
+        @return: Number of steps.        
         '''
         
         return self._stepCount * self._metersPerStep
+    
+    
+    def getCurrentStepSpeed(self):
+        '''
+        Current step speed
+        
+        @return: steps/s 
+        '''
+        
+        return (1.0 / self._stepTime)\
+            if self._stepTime > 0.0\
+            else 0.0
+            
+        
+    
+    def getCurrentSpeed(self):
+        '''
+        Current wheel speed.
+        The distance between steps must be set before. 
+        
+        @see: setMetersPerStep
+        @return: m/s
+        '''
+        
+        return (self._metersPerStep / self._stepTime)\
+            if self._stepTime > 0.0\
+            else 0.0
     
     
     def _doPoll(self):
@@ -111,12 +149,16 @@ class WheelMotion(object):
         pollingObj.register(sysfile, select.POLLPRI | select.POLLERR)
         
         try:
+            lastStepTime = time.time()
             while self._isRunning:
         
                 eventList = pollingObj.poll(WheelMotion.POLL_TIMEOUT)
                 if len(eventList) != 0:
                     sysfile.seek(0)
                     if sysfile.readline()[0] == '0':
+                        currentStepTime = time.time() 
+                        self._stepTime = currentStepTime - lastStepTime
+                        lastStepTime = currentStepTime
                         self._stepCount += 1
                         self.onStep.fire()
         

@@ -322,7 +322,7 @@ class StabilizedDriver(Driver):
         
         self._directionTarget = 0.0
         
-        self._stabilizerPid = Pid(StabilizedDriver.PID_PERIOD, 1, self._readCurrentValues, self._setPidOutput, "Driver-PID")
+        self._stabilizerPid = Pid(StabilizedDriver.PID_PERIOD, 1, self._readCurrentValues, self._setPidOutput, "PID_{0}".format(type(self).__name__))
         self._stabilizerPid.setProportionalConstants([1.0])
         self._stabilizerPid.setIntegralConstants([0.0])
         
