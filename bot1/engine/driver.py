@@ -8,7 +8,7 @@ Created on 06/04/2015
 
 import logging
 
-from engine.motor import Motor, MotorDummy
+from engine.motor import Motor, StepMotor, MotorDummy
 from stabilization.pid import Pid
 
 
@@ -31,14 +31,17 @@ class Driver(object):
     DIRECTION_DIV2 = 200.0
     
     @staticmethod
-    def createForRobot():
+    def createForRobot(stepMotor = False):
         '''
         Creates a new motor driver for robot context
         @return: The driver object
         '''
         
         driver = Driver()
-        driver.setMotors(Motor(1), Motor(0))
+        if stepMotor:
+            driver.setMotors(StepMotor(1), StepMotor(0))
+        else:
+            driver.setMotors(Motor(1), Motor(0))
         
         return driver
     

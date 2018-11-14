@@ -10,6 +10,7 @@ from os import system
 from os.path import exists
 
 from engine.sysfs_writer import SysfsWriter
+from sensor.wheel import WheelMotion 
 from stabilization.pid import Pid
 
 
@@ -282,11 +283,11 @@ class StepMotor(Motor):
     
     _stepGpios = [66, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
     
-    def __init__(self, motorId, wheelSensor):
+    def __init__(self, motorId, wheelSensor=None):
         
         super().__init__(motorId)
         #TODO: 20181112 DPM: The sensor could be get from a pool. The pilot uses the same sensor too.
-        self._wheelSensor = wheelSensor
+        self._wheelSensor = wheelSensor if wheelSensor != None else WheelMotion(StepMotor._stepGpios[motorId])
         self._pid = Pid(StepMotor.PID_PERIOD, 1, self._readSensorInput, self._setPidOutput, "PID_{0}#{1}".format(type(self).__name__, motorId))\
             .setProportionalConstants([StepMotor.KP])\
             .setIntegralConstants([StepMotor.KI])\
