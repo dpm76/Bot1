@@ -46,7 +46,10 @@ thread = Thread(target=_doPoll, args=[wheelSensor])
 thread.start()
 
 try:
-    drive(motor, 50.0, 10)        
+    drive(motor, 50.0, 10)
+    logging.info("Neutral")
+    motor.setNeutralThrottle()
+    time.sleep(10)
     
 finally:
     motor.stop()
