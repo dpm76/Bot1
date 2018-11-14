@@ -35,7 +35,7 @@ class Motor(object):
     NEUTRAL_DUTY = 0 #nanoseconds
     MAX_DUTY = PERIOD * 90 / 100 #nanoseconds Max duty cannot be more than 90% of the period.
 
-    MAX_THROTTLE = 100.0 #percentage
+    MAX_THROTTLE = 90.0 #percentage
 
 
     def __init__(self, motorId):
@@ -111,6 +111,7 @@ class Motor(object):
         absThrottle = abs(self._throttle)
         
         #Fordwards or backwards movement
+        #TODO: 20181114 DPM: This is not required to do if the throttle sign was not changed
         if self._throttle >= 0.0:
             SysfsWriter.writeOnce("0", "/sys/class/gpio/gpio{0}/value".format(self._gpioId))
         else:
@@ -126,7 +127,7 @@ class Motor(object):
             self._setNeutralThrottle()
             
         else: # absThrottle > Motor.MAX_THROTTLE
-            self._duty = Motor.MAX_DUTY
+            self._duty = int((self._rangeDuty * Motor.MAX_THROTTLE) + self._minDuty)
             self._throttle = Motor.MAX_THROTTLE if self._throttle > 0.0 else -Motor.MAX_THROTTLE
 
         self._sysfsWriter.write(str(self._duty))
@@ -273,11 +274,11 @@ class MotorDummy(object):
 class StepMotor(Motor):
     
     PID_PERIOD = 0.05
-    STEP_SPEED_MAX = 10.0 # steps/s
+    STEP_SPEED_MAX = 30.0 # steps/s
     
-    KP = 0.05
-    KI = 0.02
-    KD = 0.05
+    KP = 1.0
+    KI = 2.0
+    KD = 0.08
     
     _stepGpios = [66, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
     
@@ -296,12 +297,18 @@ class StepMotor(Motor):
     
     def _readSensorInput(self):
         
-        return [-self._wheelSensor.getCurrentStepSpeed()\
+        sensorInput = [-self._wheelSensor.getCurrentStepSpeed()\
                 if self._stepSpeedTaget < 0.0\
                 else self._wheelSensor.getCurrentStepSpeed()]
+        
+        logging.debug("Wheel sensor input: {0:.3f}".format(sensorInput[0]))
+        
+        return sensorInput
     
     
     def _setPidOutput(self, output):
+        
+        logging.debug("wheel output: {0:.3f}".format(output[0]))
         
         super().setThrottle(output[0])
     

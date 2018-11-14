@@ -3,6 +3,7 @@ Created on 2 nov. 2018
 
 @author: david
 '''
+import logging
 import select
 from threading import Thread
 import time
@@ -33,7 +34,9 @@ class WheelMotion(object):
         self._pollThread = None        
         
         self._stepCount = 0
-        self._stepTime = -1 
+        self._stepTime = -1
+        
+        self._lastStepTime = time.time()
         
         SysfsWriter.writeOnce("in", "/sys/class/gpio/gpio{0}/direction".format(self._gpioPort))
         SysfsWriter.writeOnce("rising", "/sys/class/gpio/gpio{0}/edge".format(self._gpioPort))
@@ -118,8 +121,10 @@ class WheelMotion(object):
         @return: steps/s 
         '''
         
+        elapsedTime = time.time() - self._lastStepTime
+        logging.debug("elapsedTime = {0:.3f}; stepTime = {1:.3f}".format(elapsedTime, self._stepTime))
         return (1.0 / self._stepTime)\
-            if self._stepTime > 0.0\
+            if self._stepTime > 0.0 and elapsedTime < self._stepTime * 4.0\
             else 0.0
             
         
@@ -149,7 +154,7 @@ class WheelMotion(object):
         pollingObj.register(sysfile, select.POLLPRI | select.POLLERR)
         
         try:
-            lastStepTime = time.time()
+            self._lastStepTime = time.time()
             while self._isRunning:
         
                 eventList = pollingObj.poll(WheelMotion.POLL_TIMEOUT)
@@ -157,8 +162,8 @@ class WheelMotion(object):
                     sysfile.seek(0)
                     if sysfile.readline()[0] == '0':
                         currentStepTime = time.time() 
-                        self._stepTime = currentStepTime - lastStepTime
-                        lastStepTime = currentStepTime
+                        self._stepTime = currentStepTime - self._lastStepTime
+                        self._lastStepTime = currentStepTime
                         self._stepCount += 1
                         self.onStep.fire()
         
