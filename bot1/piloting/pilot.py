@@ -19,14 +19,20 @@ class PilotState(Enum):
 
 class BasicPilot(object):
     
+    PID_PERIOD = 0.02
+    
     #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
-    ROTATION_MAX_THROTTLE = 40.0
-    ROTATION_MIN_THROTTLE = 25.0        
+    ROTATION_MAX_DIRECTION = 40.0
+    ROTATION_MIN_DIRECTION = 25.0        
     ROTATION_PRECISION_DEGREES = 5.0
-    ROTATION_PID_PERIOD = 0.02    
     ROTATION_KP = 0.05
     ROTATION_KI = 0.02
     ROTATION_KD = 0.05
+    
+    TRAVEL_MAX_DIRECTION = 50.0
+    TRAVEL_AIMED_KP = 0.1
+    TRAVEL_AIMED_KI = 0.01
+    TRAVEL_AIMED_KD = 0.0
     
     def __init__(self, driver):
         
@@ -37,6 +43,7 @@ class BasicPilot(object):
         self._state = PilotState.Stopped
         
         self._travelStepsTarget = 0
+        self._lastDirectionError = 0.0
         
          
     def setImuSensor(self, imu):
@@ -62,9 +69,51 @@ class BasicPilot(object):
         return self._state
     
     
-    def travel(self, steps, throttle):
+    def _stabilizeDirection(self, targetAngle, minDir, maxDir, kp, ki, kd, endCondition):
+        
+        self._imu.updateGyroTime()
+        lastTime = time.time()
+        currentAngle = self._imu.readAngleZ()
+        err1 = (targetAngle-currentAngle)%360.0
+        err2 = (currentAngle-targetAngle)%360.0
+        integral = 0.0        
+        if err1 < err2:
+            self._lastDirectionError = -err1
+        else:
+            self._lastDirectionError = err2
+            
+        while not endCondition():
+            time.sleep(BasicPilot.PID_PERIOD)
+            currentTime = time.time()
+            currentAngle = self._imu.readAngleZ()
+            err1 = (targetAngle-currentAngle)%360.0
+            err2 = (currentAngle-targetAngle)%360.0
+            if err1 < err2:
+                err = -err1
+                minDirection = -minDir
+            else:
+                err = err2
+                minDirection = minDir
+        
+            dt = currentTime - lastTime
+            integral += err * dt
+            deriv = (err - self._lastDirectionError) / dt
+            direction = minDirection + (kp * err) + (ki * integral) + (kd * deriv)
+            lastTime = currentTime
+            self._lastDirectionError = err
+        
+            if direction > maxDir:
+                direction = maxDir
+            elif direction < -maxDir:
+                direction = -maxDir
+            self._driver.setDirection(direction)
+
+    
+    def travelSteps(self, steps, throttle):
         
         if self._state == PilotState.Stopped and self._wheelMotionSensor != None:
+            self._driver.setNeutral()
+            self._driver.setMode(Driver.MODE_NORMAL)
             self._travelStepsTarget = steps
             self._wheelMotionSensor.resetStepCounter()
             self._state = PilotState.Travelling
@@ -75,6 +124,22 @@ class BasicPilot(object):
             
         else:
             raise Exception("There is no wheel motion sensor!")
+        
+    
+    def travelAimedSteps(self, steps, throttle, aimAngle):
+        
+        if self._imu != None:
+            self.travelSteps(steps, throttle)
+            self._stabilizeDirection(aimAngle,\
+                                     0.0,\
+                                     BasicPilot.TRAVEL_MAX_DIRECTION,\
+                                     BasicPilot.TRAVEL_AIMED_KP,\
+                                     BasicPilot.TRAVEL_AIMED_KI,\
+                                     BasicPilot.TRAVEL_AIMED_KD,\
+                                     lambda: self._state != PilotState.Stopped)
+
+        else:
+            raise Exception("There is no IMU sensor!")
     
     
     def turnTo(self, targetAngle):
@@ -83,42 +148,14 @@ class BasicPilot(object):
             
             self._driver.setNeutral()
             self._driver.setMode(Driver.MODE_ROTATE)
-            self._imu.updateGyroTime()
-            lastTime = time.time()
-            currentAngle = self._imu.readAngleZ()
-            err1 = (targetAngle-currentAngle)%360.0
-            err2 = (currentAngle-targetAngle)%360.0
-            integral = 0.0
-            lastError = 0.0
-            if err1 < err2:
-                err = -err1
-            else:
-                err = err2
-            while abs(err) > BasicPilot.ROTATION_PRECISION_DEGREES:
-                time.sleep(BasicPilot.ROTATION_PID_PERIOD)
-                currentTime = time.time()
-                currentAngle = self._imu.readAngleZ()
-                err1 = (targetAngle-currentAngle)%360.0
-                err2 = (currentAngle-targetAngle)%360.0
-                if err1 < err2:
-                    err = -err1
-                    minThrottle = -BasicPilot.ROTATION_MIN_THROTTLE
-                else:
-                    err = err2
-                    minThrottle = BasicPilot.ROTATION_MIN_THROTTLE
-        
-                dt = currentTime - lastTime
-                integral += err * dt
-                deriv = (err - lastError) / dt
-                direction = minThrottle + (BasicPilot.ROTATION_KP * err) + (BasicPilot.ROTATION_KI * integral) + (BasicPilot.ROTATION_KD * deriv)
-                lastTime = currentTime
-                lastError = err
-  
-                if direction > BasicPilot.ROTATION_MAX_THROTTLE:
-                    direction = BasicPilot.ROTATION_MAX_THROTTLE
-                elif direction < -BasicPilot.ROTATION_MAX_THROTTLE:
-                    direction = -BasicPilot.ROTATION_MAX_THROTTLE
-                self._driver.setDirection(direction)
+            
+            self._stabilizeDirection(targetAngle,\
+                                     BasicPilot.ROTATION_MIN_DIRECTION,\
+                                     BasicPilot.ROTATION_MAX_DIRECTION,\
+                                     BasicPilot.ROTATION_KP,\
+                                     BasicPilot.ROTATION_KI,\
+                                     BasicPilot.ROTATION_KD,\
+                                     lambda: abs(self._lastDirectionError) < BasicPilot.ROTATION_PRECISION_DEGREES)
 
             self._driver.setNeutral()
                     
