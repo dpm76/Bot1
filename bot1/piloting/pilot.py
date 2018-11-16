@@ -5,6 +5,7 @@ Created on 06/11/2018
 '''
 from enum import Enum, unique
 import time
+import logging
 
 from engine.driver import Driver
 
@@ -30,8 +31,8 @@ class BasicPilot(object):
     ROTATION_KD = 0.05
     
     TRAVEL_MAX_DIRECTION = 50.0
-    TRAVEL_AIMED_KP = 0.1
-    TRAVEL_AIMED_KI = 0.01
+    TRAVEL_AIMED_KP = 3.0
+    TRAVEL_AIMED_KI = 1.0
     TRAVEL_AIMED_KD = 0.0
     
     def __init__(self, driver):
@@ -69,7 +70,7 @@ class BasicPilot(object):
         return self._state
     
     
-    def _stabilizeDirection(self, targetAngle, minDir, maxDir, kp, ki, kd, endCondition):
+    def _stabilizeDirection(self, targetAngle, minDir, maxDir, kp, ki, kd, endCondition, invertDirection=False):
         
         self._imu.updateGyroTime()
         lastTime = time.time()
@@ -83,7 +84,7 @@ class BasicPilot(object):
             self._lastDirectionError = err2
             
         while not endCondition():
-            time.sleep(BasicPilot.PID_PERIOD)
+            time.sleep(BasicPilot.PID_PERIOD)            
             currentTime = time.time()
             currentAngle = self._imu.readAngleZ()
             err1 = (targetAngle-currentAngle)%360.0
@@ -94,6 +95,8 @@ class BasicPilot(object):
             else:
                 err = err2
                 minDirection = minDir
+                
+            logging.debug("Stabilization error: {0:.3f}".format(err))
         
             dt = currentTime - lastTime
             integral += err * dt
@@ -106,7 +109,15 @@ class BasicPilot(object):
                 direction = maxDir
             elif direction < -maxDir:
                 direction = -maxDir
+            
+            if invertDirection:
+                direction = -direction
+            
+            logging.debug("Direction: {0:.3f}".format(direction))
             self._driver.setDirection(direction)
+            
+        logging.debug("Stabilization finished")
+
 
     
     def travelSteps(self, steps, throttle):
@@ -136,7 +147,8 @@ class BasicPilot(object):
                                      BasicPilot.TRAVEL_AIMED_KP,\
                                      BasicPilot.TRAVEL_AIMED_KI,\
                                      BasicPilot.TRAVEL_AIMED_KD,\
-                                     lambda: self._state != PilotState.Stopped)
+                                     lambda: self._state == PilotState.Stopped,
+                                     throttle < 0.0)
 
         else:
             raise Exception("There is no IMU sensor!")
