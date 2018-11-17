@@ -34,11 +34,11 @@ try:
     wheelSensor.start()
     driver.start()
     logging.info("Forwards")
-    pilot.travelAimedSteps(40, TRAVEL_THROTTLE, 0.0)
+    pilot.travelAimedSteps(160, -TRAVEL_THROTTLE, 0.0)
     waitPilot(pilot)
-    logging.info("Backwards")
-    pilot.travelAimedSteps(40, -TRAVEL_THROTTLE, 0.0)
-    waitPilot(pilot)
+    #logging.info("Backwards")
+    #pilot.travelAimedSteps(80, TRAVEL_THROTTLE, 0.0)
+    #waitPilot(pilot)
 
 finally:
     logging.info("Finish")

@@ -8,24 +8,25 @@ from ui.buzzer import Buzzer
 
 buz = Buzzer(3)
 notes = [
-    (110.0, Buzzer.E-Buzzer.S),
-    (Buzzer.M, Buzzer.S)
-    (110.0, Buzzer.E-Buzzer.S),
-    (Buzzer.M, Buzzer.S)
-    (880.0, Buzzer.Q-Buzzer.S),
+    (Buzzer.A2, Buzzer.E-Buzzer.S),
+    (Buzzer.M, Buzzer.S),
+    (Buzzer.A2, Buzzer.E-Buzzer.S),
+    (Buzzer.M, Buzzer.S),
+    (Buzzer.A5, Buzzer.Q-Buzzer.S),
     (Buzzer.M, Buzzer.H+Buzzer.S),
     
-    (440.0, Buzzer.E),
-    (220.0, Buzzer.E),
-    (110.0, Buzzer.E+Buzzer.S),
+    (Buzzer.A4, Buzzer.E),
+    (Buzzer.A3, Buzzer.E),
+    (Buzzer.A2, Buzzer.E+Buzzer.S),
     (Buzzer.M, Buzzer.S),
     
-    (880.0, Buzzer.E),
-    (220.0, Buzzer.E),
-    (440.0, Buzzer.E+Buzzer.S),
+    (Buzzer.A5, Buzzer.E),
+    (Buzzer.A3, Buzzer.E),
+    (Buzzer.A4, Buzzer.E+Buzzer.S),
     (Buzzer.M, Buzzer.S),
-    (880.0, Buzzer.Q),
-    (440.0, Buzzer.H+Buzzer.Q),
+    
+    (Buzzer.A5, Buzzer.Q),
+    (Buzzer.A4, Buzzer.H+Buzzer.Q)
     ]
 
 try:    
