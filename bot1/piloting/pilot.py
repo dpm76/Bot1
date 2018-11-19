@@ -179,6 +179,26 @@ class BasicPilot(object):
             raise Exception("There is no IMU sensor!")
     
     
+    def turn(self, angle):
+    
+        if self._imu != None:
+        
+            currentAngle = self.getCurrentAngle()
+            targetAngle = (currentAngle + angle) % 360.0
+            self.turnTo(targetAngle)
+        
+        else:
+            raise Exception("There is no IMU sensor!")
+    
+    
+    def getCurrentAngle(self):
+            
+        self._imu.updateGyroTime()
+        currentAngle = self._imu.readAngleZ()
+        
+        return currentAngle
+        
+    
     def stop(self):
         
         self._driver.setNeutral()
