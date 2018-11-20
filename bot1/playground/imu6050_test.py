@@ -8,7 +8,7 @@ imu.start()
 try:
     imu.updateGyroTime()
     while True:
-        print(imu.readAngleZ())
+        print("{0:.3f}°".format(imu.readAngleZ()))
         time.sleep(0.1)
 except KeyboardInterrupt:
     print("\nBye!")
