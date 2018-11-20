@@ -74,7 +74,7 @@ class Imu6050Dmp(object):
         return accels
 
     
-    def resetGyroReadTime(self):
+    def updateGyroTime(self):
             
         self._readTime = time.time()
         

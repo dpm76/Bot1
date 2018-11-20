@@ -1,5 +1,9 @@
-from sensor.imu6050 import Imu6050
+from sensor.imu6050dmp import Imu6050Dmp as Imu6050
+#from sensor.imu6050 import Imu6050
 import time
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 print("Press CTRL+C to stop")
 imu = Imu6050()
