@@ -14,7 +14,7 @@ import time
 
 from sensor.pycomms.mpu6050 import MPU6050
 from sensor.vector import Vector
-
+import sensor.imu6050_defs as reg
 
 class Imu6050Dmp(object):
     '''
@@ -129,12 +129,27 @@ class Imu6050Dmp(object):
         
         self.refreshState()
         return degrees(self._angles[2])
+    
         
+    def _readRawGyroX(self):
+        
+        return self._readWordHL(reg.GYRO_XOUT)
+    
+    
+    def _readRawGyroY(self):
+        
+        return self._readWordHL(reg.GYRO_YOUT)
+    
+    
+    def _readRawGyroZ(self):
+        
+        return self._readWordHL(reg.GYRO_ZOUT)
+    
     
     def start(self):
 
         logging.info("Using IMU-6050 (DMP).")
-
+        
         self._imu.dmpInitialize()
         self._imu.setDMPEnabled(True)
 
