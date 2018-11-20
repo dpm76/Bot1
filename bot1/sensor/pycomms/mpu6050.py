@@ -7,6 +7,7 @@ from time import sleep
 from .pycomms import PyComms
 from sensor.vector import Vector
 
+import logging
 
 # External Imports
 pass
@@ -594,7 +595,7 @@ class MPU6050:
     def initialize(self):
         self.setClockSource(self.MPU6050_CLOCK_PLL_ZGYRO)
         self.setDLPFMode(self.MPU6050_DLPF_BW_5)
-        self.setRate(19)
+        self.setRate(9)
         self.setFullScaleGyroRange(self.MPU6050_GYRO_FS_250)
         self.setFullScaleAccelRange(self.MPU6050_ACCEL_FS_2)   
         self.setSleepEnabled(False)
@@ -1622,16 +1623,9 @@ class MPU6050:
 
     def dmpInitialize(self):
         
-        self.initialize()
-        gyroOffset = [
-            self.i2c.readU16(self.MPU6050_RA_GYRO_XOUT_H),
-            self.i2c.readU16(self.MPU6050_RA_GYRO_YOUT_H),
-            self.i2c.readU16(self.MPU6050_RA_GYRO_ZOUT_H)
-        ]
-        
         # Resetting MPU6050
         self.reset()
-        sleep(0.05) # wait after reset
+        sleep(0.5) # wait after reset
         
         # Disable sleep mode
         self.setSleepEnabled(False)
@@ -1667,16 +1661,16 @@ class MPU6050:
         self.setIntEnabled(0x12)
         
         # Setting sample rate to 200Hz
-        self.setRate(19) # 1khz / (1 + 4) = 200 Hz [9 = 100 Hz]
+        self.setRate(4) # 1khz / (1 + 4) = 200 Hz [9 = 100 Hz]
         
         # Setting external frame sync to TEMP_OUT_L[0]
         self.setExternalFrameSync(self.MPU6050_EXT_SYNC_TEMP_OUT_L)
         
         # Setting DLPF bandwidth to 42Hz
-        self.setDLPFMode(self.MPU6050_DLPF_BW_5)
+        self.setDLPFMode(self.MPU6050_DLPF_BW_42)
         
         # Setting gyro sensitivity to +/- 2000 deg/sec
-        self.setFullScaleGyroRange(self.MPU6050_GYRO_FS_250)
+        self.setFullScaleGyroRange(self.MPU6050_GYRO_FS_2000)
         
         # Setting DMP configuration bytes (function unknown)
         self.setDMPConfig1(0x03)
@@ -1691,9 +1685,9 @@ class MPU6050:
         #self.setZGyroOffset(zgOffset);   
         
         # Setting X/Y/Z gyro user offsets to zero
-        self.setXGyroOffsetUser(gyroOffset[0])
-        self.setYGyroOffsetUser(gyroOffset[1])
-        self.setZGyroOffsetUser(gyroOffset[2])
+        self.setXGyroOffsetUser(0)
+        self.setYGyroOffsetUser(0)
+        self.setZGyroOffsetUser(0)
 
 
         # Writing final memory update 1/7 (function unknown)
