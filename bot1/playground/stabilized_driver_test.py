@@ -6,7 +6,7 @@ import time
 
 logging.basicConfig(level=logging.DEBUG)
 
-imu = ImuDummy()
+imu = ImuDummy([0.0]*3)
 driver = StabilizedDriver.createForTesting(imu)
 
 driver.start()

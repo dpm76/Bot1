@@ -7,8 +7,6 @@ from time import sleep
 from .pycomms import PyComms
 from sensor.vector import Vector
 
-import logging
-
 # External Imports
 pass
 

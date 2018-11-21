@@ -9,7 +9,7 @@ import time
 from engine.driver import Driver, StepMotor
 from piloting.pilot import BasicPilot, PilotState
 from sensor.wheel import WheelMotion
-from sensor.imu6050 import Imu6050
+from sensor.imu6050dmp import Imu6050Dmp
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +23,7 @@ def waitPilot(pilot):
 TRAVEL_THROTTLE = 30.0
 
 logging.info("Initializing IMU")
-imu = Imu6050()
+imu = Imu6050Dmp()
 imu.start()
 driver = Driver.createForRobot()
 wheelSensor = WheelMotion(StepMotor._stepGpios[0])

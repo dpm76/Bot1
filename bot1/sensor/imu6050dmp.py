@@ -127,9 +127,14 @@ class Imu6050Dmp(object):
 
     def readAngleZ(self):
         
-        self.refreshState()
-        return degrees(self._angles[2])
-    
+        self._readPacket()        
+        
+        q = self._imu.dmpGetQuaternion(self._packet)
+        g = self._imu.dmpGetGravity(q)
+        
+        ypr = self._imu.dmpGetYawPitchRoll(q, g)        
+        self._angles = [ypr["pitch"], ypr["roll"], ypr["yaw"]]
+        return self._angles[2]    
         
     def _readRawGyroX(self):
         
