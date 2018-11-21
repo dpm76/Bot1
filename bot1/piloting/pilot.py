@@ -23,7 +23,7 @@ class BasicPilot(object):
     PID_PERIOD = 0.02
     
     #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
-    ROTATION_MAX_DIRECTION = 40.0
+    ROTATION_MAX_DIRECTION = 90.0
     ROTATION_MIN_DIRECTION = 25.0        
     ROTATION_PRECISION_DEGREES = 5.0
     ROTATION_KP = 0.05

@@ -134,7 +134,12 @@ class Imu6050Dmp(object):
         
         ypr = self._imu.dmpGetYawPitchRoll(q, g)        
         self._angles = [ypr["pitch"], ypr["roll"], ypr["yaw"]]
-        return self._angles[2]    
+        angleZ = degrees(self._angles[2])
+        if angleZ < 0.0:
+            angleZ += 360.0
+        
+        return angleZ
+        
         
     def _readRawGyroX(self):
         

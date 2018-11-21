@@ -12,7 +12,7 @@ from sensor.wheel import WheelMotion
 from sensor.imu6050dmp import Imu6050Dmp
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 def waitPilot(pilot):
     
