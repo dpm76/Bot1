@@ -15,6 +15,15 @@ except ImportError:
 # PyComms I2C Base Class (an rewriten Adafruit_I2C pythone class clone)
 # ===========================================================================
 
+def bytesC2(byteH, byteL):
+    
+        word = (byteH << 8) | byteL
+        if (byteH & 0x80) != 0:
+            word = -(0xffff - word + 1)
+            
+        return word
+
+
 class PyComms:
     def __init__(self, address, channel = 0):
         self.address = address

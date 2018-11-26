@@ -7,7 +7,8 @@ pass
 pass
 
 # Custom Imports
-from pycomms import PyComms
+from sensor.pycomms.pycomms import PyComms, bytesC2
+
 
 class HMC5883L:
     # Register map based on Jeff Rowberg <jeff@rowberg.net> source code at
@@ -78,19 +79,19 @@ class HMC5883L:
     
     mode = 0
 
-    def __init__(self, address = HMC5883L_DEFAULT_ADDRESS):
-        self.i2c = PyComms(address)
+    def __init__(self, address = HMC5883L_DEFAULT_ADDRESS, channel=1):
+        self.i2c = PyComms(address, channel)
         self.address = address
         
     def initialize(self):
         # write CONFIG_A register
         self.i2c.write8(self.HMC5883L_RA_CONFIG_A,
-            (self.HMC5883L_AVERAGING_8 << (self.HMC5883L_CRA_AVERAGE_BIT - self.HMC5883L_CRA_AVERAGE_LENGTH + 1)) |
+            (self.HMC5883L_AVERAGING_4 << (self.HMC5883L_CRA_AVERAGE_BIT - self.HMC5883L_CRA_AVERAGE_LENGTH + 1)) |
             (self.HMC5883L_RATE_15     << (self.HMC5883L_CRA_RATE_BIT - self.HMC5883L_CRA_RATE_LENGTH + 1)) |
             (self.HMC5883L_BIAS_NORMAL << (self.HMC5883L_CRA_BIAS_BIT - self.HMC5883L_CRA_BIAS_LENGTH + 1)))
 
         # write CONFIG_B register
-        self.setGain(self.HMC5883L_GAIN_1090);
+        self.setGain(self.HMC5883L_GAIN_1370);
     
         # write MODE register
         self.setMode(self.HMC5883L_MODE_SINGLE);      
@@ -130,16 +131,18 @@ class HMC5883L:
         # requirement specified in the datasheet
         self.i2c.write8(self.HMC5883L_RA_MODE, self.mode << (self.HMC5883L_MODEREG_BIT - self.HMC5883L_MODEREG_LENGTH + 1))
         self.mode = newMode # track to tell if we have to clear bit 7 after a read
-     
+
+    
     def getHeading(self):
-        packet = self.i2c.readBytesListS(self.HMC5883L_RA_DATAX_H, 6)
+        packet = self.i2c.readBytesListU(self.HMC5883L_RA_DATAX_H, 6)
         if (self.mode == self.HMC5883L_MODE_SINGLE):
             self.i2c.write8(self.HMC5883L_RA_MODE, self.HMC5883L_MODE_SINGLE << (self.HMC5883L_MODEREG_BIT - self.HMC5883L_MODEREG_LENGTH + 1))  
            
         data = {
-            'x' : ((packet[0] << 8) | packet[1]),
-            'y' : ((packet[4] << 8) | packet[5]),
-            'z' : ((packet[2] << 8) | packet[3])}
+            'x' : bytesC2(packet[0], packet[1]),
+            'y' : bytesC2(packet[4], packet[5]),
+            'z' : bytesC2(packet[2], packet[3])
+        }
             
         return data    
         
