@@ -13,7 +13,7 @@ from sensor.pycomms.mpu6050 import MPU6050
 PHYSICAL_MPU_AXES = ["pitch", "roll", "yaw"]
 PHYSICAL_MPU_SIGNS = [1, -1, 1]
 PHYSICAL_MAGNET_AXES = ["x", "y", "z"]
-PHYSICAL_MPU_SIGNS = [1, 1, 1]
+PHYSICAL_MPU_SIGNS = [-1, 1, -1]
 
 MAGNET_CALIB_PERIOD = 0.02
 MAGNET_CALIB_LPF_ALPHA = 0.1
@@ -117,7 +117,7 @@ def calibrate(mag, mpu, calibTime=30):
     offsetY = (minHeadY+maxHeadY)/2.0
     maxValY = maxHeadY - offsetY
     
-    return {"x": {"offset": offsetX, "max": maxValX}, "y":{"offset": offsetY, "min": maxValY}}
+    return {"x": {"offset": offsetX, "max": maxValX}, "y":{"offset": offsetY, "max": maxValY}}
 
 
 # MPU initialization
