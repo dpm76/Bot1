@@ -10,6 +10,13 @@ import time
 from sensor.pycomms.hmc5883l import HMC5883L
 from sensor.pycomms.mpu6050 import MPU6050
 
+PHYSICAL_MPU_AXES = ["pitch", "roll", "yaw"]
+PHYSICAL_MPU_SIGNS = [1, -1, 1]
+PHYSICAL_MAGNET_AXES = ["x", "y", "z"]
+PHYSICAL_MPU_SIGNS = [1, 1, 1]
+
+MAGNET_CALIB_PERIOD = 0.02
+MAGNET_CALIB_LPF_ALPHA = 0.1
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -46,15 +53,28 @@ def readMagHeadings(mag, mpu):
         g = mpu.dmpGetGravity(q)        
         ypr = mpu.dmpGetYawPitchRoll(q, g)
         
-        angles = [ypr['pitch'], -ypr['roll'], ypr['yaw']]
+        angles = [
+            PHYSICAL_MPU_SIGNS[0]*ypr[PHYSICAL_MPU_AXES[0]], 
+            PHYSICAL_MPU_SIGNS[1]*ypr[PHYSICAL_MPU_AXES[1]],
+            PHYSICAL_MPU_SIGNS[2]*ypr[PHYSICAL_MPU_AXES[2]]
+        ]
             
-        magDict = mag.getHeading()                
+        magDict = mag.getHeading()
+        magField = [
+            PHYSICAL_MPU_SIGNS[0]*magDict[PHYSICAL_MAGNET_AXES[0]],
+            PHYSICAL_MPU_SIGNS[1]*magDict[PHYSICAL_MAGNET_AXES[1]],
+            PHYSICAL_MPU_SIGNS[2]*magDict[PHYSICAL_MAGNET_AXES[2]],
+        ]
         
-        headX = magDict["x"]*math.cos(angles[1])+magDict["y"]*math.sin(angles[0])*math.sin(angles[1])+magDict["z"]*math.cos(angles[0])*math.sin(angles[1])
-        headY = magDict["y"]*math.cos(angles[0])-magDict["z"]*math.sin(angles[0])
+        cosX = math.cos(angles[0])
+        sinX = math.sin(angles[0])
+        cosY = math.cos(angles[1])
+        sinY = math.sin(angles[1])
+        
+        headX = magField[0] * cosY + magField[1] * sinX * sinY + magField[2] * cosX * sinY
+        headY = magField[1] * cosX - magField[2] * sinX
 
         return (headX, headY)
-
 
 
 def calibrate(mag, mpu, calibTime=30):
@@ -65,12 +85,14 @@ def calibrate(mag, mpu, calibTime=30):
     
     t0 = time.time()
     
+    lpfComp = 1.0 - MAGNET_CALIB_LPF_ALPHA
+    
     while time.time() - t0 < calibTime:
     
         headX, headY = readMagHeadings(mag, mpu)
                 
-        filtHeadX = 0.9*lastHeadX+0.1*headX
-        filtHeadY = 0.9*lastHeadY+0.1*headY
+        filtHeadX = lpfComp * lastHeadX + MAGNET_CALIB_LPF_ALPHA * headX
+        filtHeadY = lpfComp * lastHeadY + MAGNET_CALIB_LPF_ALPHA * headY
         
         lastHeadX = filtHeadX
         lastHeadY = filtHeadY
@@ -87,7 +109,7 @@ def calibrate(mag, mpu, calibTime=30):
         if filtHeadY < minHeadY:
             minHeadY = filtHeadY
             
-        time.sleep(0.02)
+        time.sleep(MAGNET_CALIB_PERIOD)
 
     offsetX = (minHeadX+maxHeadX)/2.0
     maxValX = maxHeadX - offsetX
