@@ -94,7 +94,7 @@ class AttitudeSensor(object):
 
     def calibrate(self, calibTime=30):
         
-        headX, headY = self._readSensors()
+        headX, headY,_ = self._readSensors()
         lastHeadX = maxHeadX = minHeadX = headX
         lastHeadY = maxHeadY = minHeadY = headY
         
@@ -104,7 +104,7 @@ class AttitudeSensor(object):
         
         while time.time() - t0 < calibTime:
         
-            headX, headY = self._readSensors()
+            headX, headY,_ = self._readSensors()
                     
             filtHeadX = lpfComp * lastHeadX + AttitudeSensor.MAGNET_CALIB_LPF_ALPHA * headX
             filtHeadY = lpfComp * lastHeadY + AttitudeSensor.MAGNET_CALIB_LPF_ALPHA * headY
@@ -132,7 +132,7 @@ class AttitudeSensor(object):
         offsetY = (minHeadY+maxHeadY)/2.0
         maxValY = maxHeadY - offsetY
         
-        self._calib = {"x": {"offset": offsetX, "max": maxValX}, "y":{"offset": offsetY, "max": maxValY}}
+        self._magCalib = {"x": {"offset": offsetX, "max": maxValX}, "y":{"offset": offsetY, "max": maxValY}}
 
 
     def _normalizeHeadingComponents(self, headX, headY):
@@ -153,7 +153,7 @@ class AttitudeSensor(object):
             self._imu.resetFIFO()
             fifoCount = 0
         
-        while fifoCount < self._packetSize:
+        while fifoCount < self._imuPacketSize:
             time.sleep(0.001)
             fifoCount = self._imu.getFIFOCount()
         
