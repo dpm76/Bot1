@@ -36,8 +36,8 @@ class AttitudeSensor(object):
         @param channel: I2C channel
         '''
         
-        self._imu = MPU6050(channel)
-        self._mag = HMC5883L(channel)
+        self._imu = MPU6050(channel=channel)
+        self._mag = HMC5883L(channel=channel)
         
         self._imuPacketSize = 0
         self._magCalib = None
