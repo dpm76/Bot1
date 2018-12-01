@@ -4,10 +4,9 @@ Created on 6 nov. 2018
 @author: david
 '''
 import logging
-import time
 
 from engine.driver import Driver, StepMotor
-from piloting.pilot import BasicPilot, PilotState
+from piloting.pilot import BasicPilot
 from sensor.wheel import WheelMotion
 from sensor.imu6050 import Imu6050
 

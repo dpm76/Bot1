@@ -281,7 +281,7 @@ class StepMotor(Motor):
     KI = 2.0
     KD = 0.08
     
-    _stepGpios = [66, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
+    _stepGpios = [69, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
     
     def __init__(self, motorId, wheelSensor=None):
         
