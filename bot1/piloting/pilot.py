@@ -24,7 +24,7 @@ class BasicPilot(object):
     
     #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
     ROTATION_MAX_DIRECTION = 90.0
-    ROTATION_MIN_DIRECTION = 25.0        
+    ROTATION_MIN_DIRECTION = 30.0        
     ROTATION_PRECISION_DEGREES = 5.0
     ROTATION_KP = 0.05
     ROTATION_KI = 0.02
