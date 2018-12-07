@@ -200,6 +200,7 @@ class MotorDummy(object):
         self._motorId = motorId        
         self._throttle = 0.0
         
+        
     def _log(self, message):
         """
         Logs a message
@@ -277,9 +278,9 @@ class StepMotor(Motor):
     PID_PERIOD = 0.05
     STEP_SPEED_MAX = 30.0 # steps/s
     
-    KP = 1.0
-    KI = 2.0
-    KD = 0.08
+    KP = 0.5
+    KI = 2.5
+    KD = 0.05
     
     _stepGpios = [69, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
     
@@ -326,6 +327,7 @@ class StepMotor(Motor):
     
     
     def stop(self):
+    
         self._pid.stop()
         super().stop()
         self._wheelSensor.stop()
@@ -341,11 +343,16 @@ class StepMotor(Motor):
         
         if throttle != 0.0:
             
+            if (self._stepSpeedTarget < 0.0 and throttle > 0.0) or\
+                (self._stepSpeedTarget > 0.0 and throttle < 0.0):
+                self._pid.resetIntegrals()
+            
             self._stepSpeedTarget = throttle * StepMotor.STEP_SPEED_MAX / 100.0
             self._pid.setTargets([self._stepSpeedTarget])
             
             if self._pid.isPaused():
                 
+                self._pid.resetIntegrals()
                 self._pid.resume()
             
         else:

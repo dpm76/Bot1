@@ -359,7 +359,7 @@ class Pid(object):
         if self._isPaused and (self._thread == None or not self._thread.isAlive()):
             
             logging.info("Resuming PID-{0}".format(self._pidName))
-
+            
             self._isRunning = True
             self._isPaused = False
             self._thread = Thread(target=self._do)
@@ -407,6 +407,15 @@ class Pid(object):
         """
         
         self._integrals[index] = 0.0
+        
+
+    def resetIntegrals(self):
+        '''
+        Sets to zero all integrals
+        '''
+    
+        length = len(self._kp)
+        self._integrals = [0.0] * length
     
     
     def resetTime(self):
