@@ -283,24 +283,24 @@ class StepMotor(Motor):
     
     _stepGpios = [69, 68] #TODO: 20181112 DPM: GPIO port for motor #1 
     
-    def __init__(self, motorId, wheelSensor=None):
+    def __init__(self, motorId):
         
         super().__init__(motorId)
         #TODO: 20181112 DPM: The sensor could be get from a pool. The pilot uses the same sensor too.
-        self._wheelSensor = wheelSensor if wheelSensor != None else WheelMotion(StepMotor._stepGpios[motorId])
+        self._wheelSensor = WheelMotion(StepMotor._stepGpios[motorId])
         self._pid = Pid(StepMotor.PID_PERIOD, 1, self._readSensorInput, self._setPidOutput, "PID_{0}#{1}".format(type(self).__name__, motorId))\
             .setProportionalConstants([StepMotor.KP])\
             .setIntegralConstants([StepMotor.KI])\
             .setDerivativeConstants([StepMotor.KD])
         
-        self._stepSpeedTaget = 0.0
-        
+        self._stepSpeedTarget = 0.0
+
     
     def _readSensorInput(self):
-        
+            
         sensorInput = [-self._wheelSensor.getCurrentStepSpeed()\
-                if self._stepSpeedTaget < 0.0\
-                else self._wheelSensor.getCurrentStepSpeed()]
+                       if self._stepSpeedTarget < 0.0\
+                       else self._wheelSensor.getCurrentStepSpeed()]
         
         logging.debug("Wheel sensor input: {0:.3f}".format(sensorInput[0]))
         
@@ -310,12 +310,17 @@ class StepMotor(Motor):
     def _setPidOutput(self, output):
         
         logging.debug("wheel output: {0:.3f}".format(output[0]))
-        
         super().setThrottle(output[0])
+    
+    
+    def getWheelMotionSensor(self):
+        
+        return self._wheelSensor
     
     
     def start(self):
         
+        self._wheelSensor.start()
         super().start()
         self._pid.start()
     
@@ -323,17 +328,27 @@ class StepMotor(Motor):
     def stop(self):
         self._pid.stop()
         super().stop()
+        self._wheelSensor.stop()
         
                 
     def setNeutralThrottle(self):
         
         self.setThrottle(0.0)            
         super().setNeutralThrottle()
-        self._wheelSensor.notifyStoppedMotor()        
         
         
     def setThrottle(self, throttle):
         
-        self._stepSpeedTaget = throttle * StepMotor.STEP_SPEED_MAX / 100.0
-        self._pid.setTargets([self._stepSpeedTaget])
-        
+        if throttle != 0.0:
+            
+            self._stepSpeedTarget = throttle * StepMotor.STEP_SPEED_MAX / 100.0
+            self._pid.setTargets([self._stepSpeedTarget])
+            
+            if self._pid.isPaused():
+                
+                self._pid.resume()
+            
+        else:
+
+            self._pid.pause()
+            

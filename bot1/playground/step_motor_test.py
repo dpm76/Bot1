@@ -8,7 +8,6 @@ from threading import Thread
 import time
 
 from engine.motor import StepMotor
-from sensor.wheel import WheelMotion
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -31,13 +30,12 @@ def drive(motor, throttle, driveTime):
     
 MOTOR_ID = 1
 
-wheelSensor = WheelMotion(StepMotor._stepGpios[MOTOR_ID])
-motor = StepMotor(MOTOR_ID, wheelSensor)
+motor = StepMotor(MOTOR_ID)
+wheelSensor = motor.getWheelMotionSensor()
 
 
 logging.info("Starting")
 
-wheelSensor.start()
 motor.start()
 
 running = True
@@ -53,7 +51,6 @@ try:
     
 finally:
     motor.stop()
-    wheelSensor.stop()
     running = False
     if thread.isAlive():
         thread.join()

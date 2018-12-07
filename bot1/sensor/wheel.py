@@ -72,14 +72,6 @@ class WheelMotion(object):
         '''
         
         self._stepCount = 0
-        
-        
-    def notifyStoppedMotor(self):
-        '''
-        Tells the sensor the motor is stopped
-        '''
-        
-        self._stepTime = -1        
     
     
     def setMetersPerStep(self, metersPerStep):
@@ -138,9 +130,7 @@ class WheelMotion(object):
         @return: m/s
         '''
         
-        return (self._metersPerStep / self._stepTime)\
-            if self._stepTime > 0.0\
-            else 0.0
+        return self.getCurrentStepSpeed() * self._metersPerStep
     
     
     def _doPoll(self):

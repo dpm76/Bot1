@@ -54,6 +54,7 @@ class Pid(object):
         self._setOutput = setOutputDelegate
     
         self._isRunning = False
+        self._isPaused = False
         self._thread = None
         
         self._length = length
@@ -270,7 +271,7 @@ class Pid(object):
             tAvg = 0.0
             fAvg = float("inf")
             
-        message = "PID-\"{0}\" (net values) t: {1:.3f}ms; f: {2:.3f}Hz".format(self._pidName, tAvg, fAvg)
+        message = "PID-{0} (net values) t: {1:.3f}ms; f: {2:.3f}Hz".format(self._pidName, tAvg, fAvg)
         logging.info(message)
         #print message
         
@@ -290,9 +291,9 @@ class Pid(object):
         Inits a thread to perform calculations in background
         """
         
-        if self._thread == None or not self._thread.isAlive():
+        if not self._isPaused and (self._thread == None or not self._thread.isAlive()):
             
-            logging.info("Starting PID-\"{0}\"".format(self._pidName))
+            logging.info("Starting PID-{0}".format(self._pidName))
 
             self._deltaTimeSum = 0.0
             self._iterationCount = 0
@@ -311,33 +312,74 @@ class Pid(object):
         """
         Stops the stabilization.
         """
-        
-        self._isRunning = False        
+
+        self._isRunning = False
+        self._isPaused = False
+
         if self._thread != None and self._thread.isAlive():
-            
+        
             self._thread.join()
+
+        logging.info("PID-{0} stopped".format(self._pidName))
+                    
+        if self._iterationCount != 0 and self._deltaTimeSum != 0.0:
             
-            if self._iterationCount != 0 and self._deltaTimeSum:
-                
-                averageDeltaTime = self._deltaTimeSum * 1000.0/ self._iterationCount
-                averageFrequency = self._iterationCount / self._deltaTimeSum
-                
-            else:
-                
-                averageDeltaTime = 0.0
-                averageFrequency = float("inf")
-                
-            message = "PID-\"{0}\" - Avg. time: {1:.3f}ms - Avg. freq: {2:.3f}Hz".format(self._pidName, averageDeltaTime, averageFrequency)
-            #print message
-            logging.info(message)
+            averageDeltaTime = self._deltaTimeSum * 1000.0/ self._iterationCount
+            averageFrequency = self._iterationCount / self._deltaTimeSum
+            
+        else:
+            
+            averageDeltaTime = 0.0
+            averageFrequency = float("inf")
+            
+        message = "PID-\"{0}\" - Avg. time: {1:.3f}ms - Avg. freq: {2:.3f}Hz".format(self._pidName, averageDeltaTime, averageFrequency)
+        #print message
+        logging.info(message)
                 
     
+    def pause(self):
+        '''
+        Pauses the stabilization
+        '''
+    
+        if self._isRunning and self._thread != None and self._thread.isAlive():
+
+            self._isRunning = False
+            self._isPaused = True
+            self._thread.join()
+            
+            logging.info("PID-{0} paused".format(self._pidName))
+        
+    
+    def resume(self):
+        '''
+        Resumes the stabilization
+        '''
+        
+        if self._isPaused and (self._thread == None or not self._thread.isAlive()):
+            
+            logging.info("Resuming PID-{0}".format(self._pidName))
+
+            self._isRunning = True
+            self._isPaused = False
+            self._thread = Thread(target=self._do)
+            self._thread.start()
+    
+        
     def isRunning(self):
         """
         @return: Reports whether the PID stabilization is currently running
         """
         
         return self._isRunning
+    
+    
+    def isPaused(self):
+        '''
+        @return: Reports whether the PID stabilization is currently paused
+        '''
+        
+        return self._isPaused
     
     
     def lockIntegral(self, index):
