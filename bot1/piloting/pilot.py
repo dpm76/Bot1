@@ -24,8 +24,9 @@ class BasicPilot(object):
     
     #TODO: 20181110 DPM: The following values should be taken from a sort of configuration
     ROTATION_MAX_DIRECTION = 90.0
-    ROTATION_MIN_DIRECTION = 30.0        
+    ROTATION_MIN_DIRECTION = 40.0        
     ROTATION_PRECISION_DEGREES = 5.0
+    ROTATION_PRECISION_DERIVATIVE = 0.01
     ROTATION_KP = 0.05
     ROTATION_KI = 0.02
     ROTATION_KD = 0.05
@@ -45,6 +46,7 @@ class BasicPilot(object):
         
         self._travelStepsTarget = 0
         self._lastDirectionError = 0.0
+        self._deriv = 0.0
         
          
     def setImuSensor(self, imu):
@@ -100,8 +102,9 @@ class BasicPilot(object):
         
             dt = currentTime - lastTime
             integral += err * dt
-            deriv = (err - self._lastDirectionError) / dt
-            direction = minDirection + (kp * err) + (ki * integral) + (kd * deriv)
+            self._deriv = (err - self._lastDirectionError) / dt
+            logging.debug("Stabilization derivative: {0:.3f}".format(self._deriv))
+            direction = minDirection + (kp * err) + (ki * integral) + (kd * self._deriv)
             lastTime = currentTime
             self._lastDirectionError = err
         
@@ -167,8 +170,10 @@ class BasicPilot(object):
                                      BasicPilot.ROTATION_KP,\
                                      BasicPilot.ROTATION_KI,\
                                      BasicPilot.ROTATION_KD,\
-                                     lambda: abs(self._lastDirectionError) < BasicPilot.ROTATION_PRECISION_DEGREES)
+                                     lambda: abs(self._lastDirectionError) < BasicPilot.ROTATION_PRECISION_DEGREES\
+                                                 and abs(self._deriv) < BasicPilot.ROTATION_PRECISION_DERIVATIVE)
 
+            logging.debug("err: {0:.3f}; deriv: {1:.3f}".format(self._lastDirectionError, self._deriv))
             self._driver.setNeutral()
                     
         

@@ -34,16 +34,54 @@ try:
     wheelSensor.start()
     driver.start()
 
-    pilot.travelAimedSteps(100, -TRAVEL_THROTTLE, 0.0)    
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 0°".format(angle))
+
+    pilot.travelAimedSteps(100, -TRAVEL_THROTTLE, 0.0)
     pilot.turnTo(315.0)
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 315°".format(angle))
+
     pilot.travelAimedSteps(100, -TRAVEL_THROTTLE, 315.0)  
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 315°".format(angle))
+
     pilot.turnTo(0.0)
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 0°".format(angle))
+
     pilot.turnTo(135.0)
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 135°".format(angle))
+
     pilot.travelAimedSteps(100, -TRAVEL_THROTTLE, 135.0)  
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 135°".format(angle))
+
     pilot.turnTo(180.0)
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 180°".format(angle))
+
     pilot.travelAimedSteps(100, -TRAVEL_THROTTLE, 180.0)  
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 180°".format(angle))
+
     pilot.turnTo(90.0)
+
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 90°".format(angle))
+
+
     pilot.turnTo(0.0)
+    angle = imu.readAngleZ()
+    logging.info("Heading: {0:.3f}°; expected 0°".format(angle))
 
 finally:    
     driver.stop()
